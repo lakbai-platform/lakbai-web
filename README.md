@@ -1,4 +1,4 @@
-## lakbai website
+# lakbai website
 
 Website for lakbai navigation and routing system
 
