@@ -1,4 +1,5 @@
-<h1 align="center">lakbai website</h1>
+## lakbai website
+
 Website for lakbai navigation and routing system
 
 ## Getting Started
