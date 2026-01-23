@@ -1,0 +1,31 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## Added
+
+- Navigation bar for the website
+
+## Changed
+
+- Main page.tsx conforming to designed UI/UX at figma
+
+## Removed
+
+- Unnecessary files are removed from the project file
+
+## [0.1.0] - 2026-01-23
+
+### Added
+
+- Initial release
+- CHANGELOG for a curated list of notable changes for each version of this project
+- README for Getting Started on development
+
+[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/johannbuere/lakbai-web/releases/tag/v0.1.0
