@@ -1,18 +1,7 @@
-import ChatBox from "@/components/ChatArea";
-import MapArea from "@/components/MapArea";
-
 export default function HomePage() {
   return (
-    <div className="flex h-full w-full bg-gray-100">
-      <div className="flex h-full w-[35%] flex-col border-r border-gray-200 bg-white">
-        <ChatBox />
-      </div>
-
-      <div className="h-full w-[65%] p-6">
-        <div className="h-full w-full overflow-hidden rounded-2xl bg-white shadow">
-          <MapArea />
-        </div>
-      </div>
+    <div className="flex h-full items-center justify-center">
+      <h1 className="text-2xl font-semibold">Welcome to Lakbai</h1>
     </div>
   );
 }

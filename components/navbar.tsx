@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { label: "Chat", href: "/chat", primary: true },
+  { label: "Chat", href: "/chat" },
   { label: "Explore", href: "/explore" },
   { label: "Journey", href: "/journey" },
   { label: "Hub", href: "/hub" },
@@ -39,7 +39,8 @@ export default function Navbar() {
         {/* Center buttons */}
         <nav className="flex items-center gap-6">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
 
             return (
               <Link
@@ -48,11 +49,9 @@ export default function Navbar() {
                 className={`
                   rounded-full px-4 py-2 text-sm font-medium transition
                   ${
-                    item.primary
-                      ? "bg-white border border-gray-300 text-gray-900 hover:bg-gray-100"
-                      : isActive
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    isActive
+                      ? "bg-slate-300 border border-gray-300 text-gray-900"
+                      : "text-gray-600 hover:bg-slate-300 hover:text-gray-900"
                   }
                 `}
               >
@@ -66,14 +65,14 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <button
             aria-label="Toggle theme"
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full p-2 hover:bg-slate-300"
           >
             ☀️
           </button>
 
           <button
             aria-label="Bag"
-            className="rounded-full p-2 hover:bg-gray-100"
+            className="rounded-full p-2 hover:bg-slate-300"
           >
             👜
           </button>
