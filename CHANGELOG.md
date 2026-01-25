@@ -7,15 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Added
+## [0.3.0] - 2026-01-25
+
+### Added
+
+- Icons for navigation items on hover/active states (Lucide React)
+- Chat Page UI with split layout (Chat/Map)
+- Map integration with MapLibre GL
+- Lime Green theme for Navbar
+
+### Changed
+
+- Restructured components into `components/layout`, `components/chat`, `components/map`
+- Redesigned Navbar layout and typography
+
+
+
+## [0.2.0] - 2026-01-25
+
+### Added
 
 - Navigation bar for the website
 
-## Changed
+### Changed
 
 - Main page.tsx conforming to designed UI/UX at figma
 
-## Removed
+### Removed
 
 - Unnecessary files are removed from the project file
 
@@ -27,5 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CHANGELOG for a curated list of notable changes for each version of this project
 - README for Getting Started on development
 
-[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/johannbuere/lakbai-web/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/johannbuere/lakbai-web/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/johannbuere/lakbai-web/releases/tag/v0.1.0

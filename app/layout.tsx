@@ -1,6 +1,17 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/navbar";
+import { Geist, Rethink_Sans } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const rethinkSans = Rethink_Sans({
+  variable: "--font-rethink-sans",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Lakbai",
@@ -14,7 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white text-gray-900">
+      <body
+        className={`${geistSans.variable} ${rethinkSans.variable} min-h-screen bg-white text-gray-900 antialiased`}
+      >
         <Navbar />
 
         <main className="h-[calc(100vh-4rem)] w-full">{children}</main>

@@ -1,17 +1,17 @@
-import ChatBox from "@/components/ChatArea";
-import MapArea from "@/components/MapArea";
+import ChatBox from "@/components/chat/ChatArea";
+import MapArea from "@/components/map/MapArea";
 
 export default function ChatPage() {
   return (
-    <div className="flex h-full w-full bg-gray-100">
-      {/* Chat area */}
-      <div className="flex h-full w-[35%] flex-col border-r border-gray-200 bg-white">
+    <div className="flex h-full w-full bg-gray-50 overflow-hidden">
+      {/* Chat area - Fixed width or percentage */}
+      <div className="flex h-full w-[400px] min-w-[350px] shrink-0 flex-col border-r border-gray-200 bg-white lg:w-[35%]">
         <ChatBox />
       </div>
 
-      {/* Map area */}
-      <div className="h-full w-[65%] p-6">
-        <div className="h-full w-full overflow-hidden rounded-2xl bg-white shadow">
+      {/* Map area - Fluid */}
+      <div className="h-full flex-1 p-4">
+        <div className="h-full w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-200 shadow-sm">
           <MapArea />
         </div>
       </div>
