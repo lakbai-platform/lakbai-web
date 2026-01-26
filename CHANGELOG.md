@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrated from MapLibre GL to Mapbox GL for map rendering
 - Updated map implementation with proper zoom tracking and event listeners
+- Change web metadata to be more descriptive
 
 ### Fixed
 
