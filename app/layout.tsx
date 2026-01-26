@@ -14,7 +14,7 @@ const rethinkSans = Rethink_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Lakbai",
+  title: "Lakbai - AI-powered travel planning and navigation",
   description: "AI-powered travel planning and navigation",
 };
 
