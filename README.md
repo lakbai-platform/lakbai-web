@@ -14,8 +14,7 @@ Website for lakbai navigation and routing system
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/johannbuere/bu-gwa-calc.git
-   cd bu-gwa-calc
+   git clone https://github.com/lakbai-platform/lakbai-web.git
    ```
 
 2. Install dependencies:
