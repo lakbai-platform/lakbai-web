@@ -3,9 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.4.3] - 2026-02-14
+
+### Added
+
+- Prettier configuration for consistent code formatting.
+- `prettier-plugin-tailwindcss` to automatically sort Tailwind CSS classes.
 
 ## [0.4.2] - 2026-02-14
 
@@ -51,7 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Restructured components into `components/layout`, `components/chat`, `components/map`
+- Restructured components into `components/layout`, `components/chat`,
+  `components/map`
 - Redesigned Navbar layout and typography
 
 ## [0.2.0] - 2026-01-25
@@ -73,10 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial release
-- CHANGELOG for a curated list of notable changes for each version of this project
+- CHANGELOG for a curated list of notable changes for each version of this
+  project
 - README for Getting Started on development
 
-[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.4.2...HEAD
+[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/johannbuere/lakbai-web/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/johannbuere/lakbai-web/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/johannbuere/lakbai-web/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/johannbuere/lakbai-web/compare/v0.3.0...v0.4.0
