@@ -8,6 +8,26 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-02-14
+
+### Added
+
+- Comprehensive CONTRIBUTING.md guide with development workflow, branching
+  conventions, commit standards, and versioning instructions
+- Tech stack section to README
+- Contributing section with quick start guide in README
+- Contact information (email and GitHub links) to README
+
+### Changed
+
+- Updated repository URLs from `johannbuere` to `lakbai-platform` organization
+- Enhanced README with better structure and contributor guidance
+
+### Fixed
+
+- Corrected clone URLs in README and CONTRIBUTING.md to point to correct
+  repository
+
 ## [0.5.0] - 2026-02-14
 
 ### Changed
@@ -107,12 +127,14 @@ and this project adheres to
   project
 - README for Getting Started on development
 
-[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/johannbuere/lakbai-web/compare/v0.4.3...v0.5.0
-[0.4.3]: https://github.com/johannbuere/lakbai-web/compare/v0.4.2...v0.4.3
-[0.4.2]: https://github.com/johannbuere/lakbai-web/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/johannbuere/lakbai-web/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/johannbuere/lakbai-web/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/johannbuere/lakbai-web/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/johannbuere/lakbai-web/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/johannbuere/lakbai-web/releases/tag/v0.1.0
+[unreleased]:
+  https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.3...v0.5.0
+[0.4.3]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/lakbai-platform/lakbai-web/releases/tag/v0.1.0
