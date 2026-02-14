@@ -8,6 +8,27 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-14
+
+### Changed
+
+- **BREAKING:** Restructured chat components into nested `_section` folder
+  structure
+- **BREAKING:** Moved `MapArea` and `Navbar` components to root components
+  folder
+- **BREAKING:** Moved global CSS from `app/` to dedicated `styles/` folder
+- Refactored Navbar component with updated styling and layout
+
+### Added
+
+- New chat section structure with `chatbox` and `journey-area` folders
+- Enhanced global CSS with updated styling
+
+### Removed
+
+- Unused SVG files from public folder (file.svg, globe.svg, lakbai-text.svg,
+  next.svg, vercel.svg, window.svg)
+
 ## [0.4.3] - 2026-02-14
 
 ### Added
@@ -86,7 +107,8 @@ and this project adheres to
   project
 - README for Getting Started on development
 
-[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.4.3...HEAD
+[unreleased]: https://github.com/johannbuere/lakbai-web/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/johannbuere/lakbai-web/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/johannbuere/lakbai-web/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/johannbuere/lakbai-web/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/johannbuere/lakbai-web/compare/v0.4.0...v0.4.1

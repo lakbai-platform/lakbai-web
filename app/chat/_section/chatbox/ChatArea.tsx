@@ -7,7 +7,7 @@ export default function ChatArea() {
   return (
     <div className="flex h-full flex-col font-sans">
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-gray-100 bg-[#CCFF00] px-4">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-gray-100 bg-tusk px-4">
         <div className="flex flex-col overflow-hidden">
           <span className="text-xs font-medium text-gray-700">
             Journey to Bahamas
@@ -35,7 +35,7 @@ export default function ChatArea() {
           {/* AI Message */}
           <div className="flex gap-3">
             {/* AI Icon */}
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BC34A] text-white">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-shamrock text-white">
               <span className="text-xs font-bold">L</span>{" "}
               {/* Placeholder for Logo/Icon */}
             </div>
@@ -71,7 +71,7 @@ export default function ChatArea() {
 
       {/* Input Area */}
       <div className="p-4">
-        <div className="relative flex items-center rounded-2xl bg-[#CCFF00] px-2 py-2 shadow-sm">
+        <div className="relative flex items-center rounded-2xl bg-tusk px-2 py-2 shadow-sm">
           <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5 text-gray-800">
             {/* Some sparkly icon */}
             <span className="text-xl">✨</span>
@@ -87,7 +87,7 @@ export default function ChatArea() {
             <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5 text-gray-800">
               <Mic size={20} />
             </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8BC34A] text-white shadow-sm hover:bg-[#7CB342]">
+            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-shamrock text-white shadow-sm hover:bg-persian-green">
               <Send size={18} />
             </button>
           </div>
