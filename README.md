@@ -72,8 +72,8 @@ for:
 
 ## License
 
-This project will be licensed under AGPL v3 (pending). See [LICENSE](LICENSE)
-file for details.
+This project will be licensed under AGPL v3. See [LICENSE](LICENSE) file for
+details.
 
 ## Contact
 
