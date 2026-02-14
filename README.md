@@ -49,8 +49,7 @@ result.
 
 ## Contributing
 
-This is an academic project and we encourage this projects primary developers of
-to participate.
+This is an academic project and we encourage this projects primary developers to participate.
 
 **Before contributing, please read our [Contributing Guide](CONTRIBUTING.md)**
 for:
