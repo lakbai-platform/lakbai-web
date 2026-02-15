@@ -8,6 +8,23 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-15
+
+### Added
+
+- `Sidebar` component with collapsible state and smooth animations
+- `lucide-react` dependency for high-quality icons
+- Static navigation links for Chat, Journey, Explore, Navigate, and Contribute
+- Footer section with Notifications and Profile
+
+### Changed
+
+- Refactored Sidebar from dynamic map loop to static `Link` components for granular control
+- Updated Sidebar styling to use "Attached" design (full-height, right border)
+- Improved Sidebar icon centering logic to handle collapsed state correctly
+- Fixed Sidebar toggle button animation to prevent layout shifts
+- Updated `Navigation` icon styling with a custom bordered container
+
 ## [0.5.1] - 2026-02-14
 
 ### Added
@@ -128,7 +145,8 @@ and this project adheres to
 - README for Getting Started on development
 
 [unreleased]:
-  https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...HEAD
+  https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.2...v0.4.3
