@@ -11,11 +11,14 @@ and this project adheres to
 ### Added
 
 - Split chat page layout into Chatbox (40%) and Map area (60%) panels
+- Journey overlay panel accessible from chat via Journey button
+- Chatbox UI with rounded chat container and header section
 
 ### Changed
 
 - Updated chat page layout structure to support component-based chat and map
   areas
+- Updated chat UI layout to separate Journey button from chat message area
 
 ## [0.6.0] - 2026-02-15
 
