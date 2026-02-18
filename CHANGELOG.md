@@ -8,6 +8,15 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Split chat page layout into Chatbox (40%) and Map area (60%) panels
+
+### Changed
+
+- Updated chat page layout structure to support component-based chat and map
+  areas
+
 ## [0.6.0] - 2026-02-15
 
 ### Added
@@ -19,7 +28,8 @@ and this project adheres to
 
 ### Changed
 
-- Refactored Sidebar from dynamic map loop to static `Link` components for granular control
+- Refactored Sidebar from dynamic map loop to static `Link` components for
+  granular control
 - Updated Sidebar styling to use "Attached" design (full-height, right border)
 - Improved Sidebar icon centering logic to handle collapsed state correctly
 - Fixed Sidebar toggle button animation to prevent layout shifts
