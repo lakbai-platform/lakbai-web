@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-02-20
+
+### Changed
+
+- Improved code formatting in `Sidebar` component using Prettier with Tailwind
+  CSS plugin
+- Refactored sidebar width classes from explicit pixel values to Tailwind
+  utility classes (`w-22`, `w-55`)
+- Enhanced code consistency with standardized indentation and spacing
+
 ## [0.6.0] - 2026-02-15
 
 ### Added
@@ -19,7 +29,8 @@ and this project adheres to
 
 ### Changed
 
-- Refactored Sidebar from dynamic map loop to static `Link` components for granular control
+- Refactored Sidebar from dynamic map loop to static `Link` components for
+  granular control
 - Updated Sidebar styling to use "Attached" design (full-height, right border)
 - Improved Sidebar icon centering logic to handle collapsed state correctly
 - Fixed Sidebar toggle button animation to prevent layout shifts
@@ -145,7 +156,8 @@ and this project adheres to
 - README for Getting Started on development
 
 [unreleased]:
-  https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...HEAD
+  https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.4.3...v0.5.0
