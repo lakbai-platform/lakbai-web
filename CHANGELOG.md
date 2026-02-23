@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-23
+
 ### Added
 
 - Split chat page layout into Chatbox (40%) and Map area (60%) panels
@@ -18,7 +20,11 @@ and this project adheres to
 
 - Updated chat page layout structure to support component-based chat and map
   areas
-- # Updated chat UI layout to separate Journey button from chat message area
+- Updated chat UI layout to separate Journey button from chat message area
+
+### Removed
+
+- Removed `mapbox-gl` and Mapbox implementations
 
 ## [0.6.1] - 2026-02-20
 
@@ -168,7 +174,8 @@ and this project adheres to
 - README for Getting Started on development
 
 [unreleased]:
-  https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...HEAD
+  https://github.com/lakbai-platform/lakbai-web/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.0...v0.5.1
