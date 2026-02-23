@@ -8,6 +8,18 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-02-23
+
+### Added
+
+- Integrated `mapcn` map components (built on MapLibre GL) for zero-config, free map visualization
+- Configured a new `MapArea` layout utilizing Carto Positron vector tiles for a light-mode base map
+
+### Changed
+
+- Refactored `Chatbox` and `JourneyArea` to dynamically utilize the design system's customized `<Text>` components
+- Converted hardcoded color/border Tailwind classes to strict CSS variables (e.g., `border-text-muted`, `bg-background`, `text-text-main`) proper integration
+
 ## [0.7.0] - 2026-02-23
 
 ### Added
@@ -174,7 +186,8 @@ and this project adheres to
 - README for Getting Started on development
 
 [unreleased]:
-  https://github.com/lakbai-platform/lakbai-web/compare/v0.7.0...HEAD
+  https://github.com/lakbai-platform/lakbai-web/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.5.1...v0.6.0

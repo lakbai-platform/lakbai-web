@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   PlusCircle
 } from 'lucide-react';
+import { TextHeading, TextBody } from '@/components/text';
 
 type JourneyAreaProps = {
   open: boolean;
@@ -19,15 +20,15 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
   if (!open) return null;
 
   return (
-    <div className='absolute inset-0 z-10 flex flex-col bg-white'>
+    <div className='absolute inset-0 z-10 flex flex-col bg-background'>
       {/* Header */}
       <div className='relative flex items-center justify-between px-6 pb-4 pt-6'>
-        <h2 className='text-[28px] font-bold tracking-tight text-[#1a3641]'>
+        <TextHeading className='text-[28px] tracking-tight text-text-main'>
           Journey Title
-        </h2>
+        </TextHeading>
         <button
           onClick={onClose}
-          className='absolute right-6 top-6 text-gray-800 hover:text-black'
+          className='absolute right-6 top-6 text-text-muted hover:text-foreground'
         >
           <X size={24} strokeWidth={1.5} />
         </button>
@@ -38,7 +39,7 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
         {['Where', 'When', 'Who'].map((label) => (
           <button
             key={label}
-            className='rounded-3xl border border-[#1a3641] px-5 py-1 text-[15px] text-[#1a3641] hover:bg-gray-50'
+            className='rounded-3xl border border-text-main px-5 py-1 text-[15px] text-text-main hover:bg-surface'
           >
             {label}
           </button>
@@ -46,26 +47,26 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
       </div>
 
       {/* Tabs Row */}
-      <div className='flex items-center justify-between border-b border-gray-300 px-6 pb-2'>
+      <div className='flex items-center justify-between border-b border-border px-6 pb-2'>
         <div className='flex items-center gap-4'>
-          <span className='cursor-pointer text-[15px] font-bold text-[#1a3641] border-b-2 border-[#1a3641] rounded-sm pb-[9px] -mb-[10px]'>
+          <span className='cursor-pointer text-[15px] font-bold text-text-main border-b-2 border-text-main rounded-sm pb-[9px] -mb-[10px]'>
             Itinerary
           </span>
-          <span className='cursor-pointer text-[15px] text-gray-500 hover:text-gray-700'>
+          <span className='cursor-pointer text-[15px] text-text-muted hover:text-foreground'>
             Calendar
           </span>
         </div>
 
         <div className='flex items-center gap-2'>
-          <button className='flex h-7 w-7 items-center justify-center rounded-full border border-[#1a3641] text-[#1a3641] hover:bg-gray-100'>
+          <button className='flex h-7 w-7 items-center justify-center rounded-full border border-text-main text-text-main hover:bg-surface'>
             <Undo2 size={15} strokeWidth={1.5} />
           </button>
-          <button className='flex h-7 w-7 items-center justify-center rounded-full border border-[#1a3641] text-[#1a3641] hover:bg-gray-100'>
+          <button className='flex h-7 w-7 items-center justify-center rounded-full border border-text-main text-text-main hover:bg-surface'>
             <Redo2 size={15} strokeWidth={1.5} />
           </button>
-          <button className='flex h-7 items-center gap-1.5 rounded-3xl border border-[#1a3641] px-3 font-medium hover:bg-gray-50'>
-            <Navigation size={14} className='fill-teal-500 text-teal-600' />
-            <span className='text-[13px] font-medium text-[#1a3641]'>Navigate</span>
+          <button className='flex h-7 items-center gap-1.5 rounded-3xl border border-text-main px-3 font-medium hover:bg-surface'>
+            <Navigation size={14} className='fill-primary-500 text-primary-600' />
+            <span className='text-[13px] font-medium text-text-main'>Navigate</span>
           </button>
         </div>
       </div>
@@ -77,28 +78,28 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
           <div className='mb-3 flex items-center justify-between'>
             <div className='flex cursor-pointer items-center'>
               <div className='flex w-7 items-center justify-start'>
-                <ChevronDown size={20} strokeWidth={2} className='text-black' />
+                <ChevronDown size={20} strokeWidth={2} className='text-foreground' />
               </div>
-              <span className='text-[15px] font-bold text-black'>Basecamp</span>
-              <span className='ml-3 pt-[2px] text-xs font-medium text-gray-500'>
+              <TextBody className='font-bold text-[15px] text-foreground'>Basecamp</TextBody>
+              <TextBody className='ml-3 pt-[2px] text-xs font-medium text-text-muted'>
                 1 item
-              </span>
+              </TextBody>
             </div>
             <div className='flex items-center gap-2'>
-              <button className='flex items-center gap-1 rounded-2xl bg-[#e5e7eb] pl-3 pr-2 py-1 hover:bg-gray-300'>
-                <span className='text-[13px] font-medium text-black'>All</span>
-                <ChevronDown size={14} strokeWidth={2} className='text-black' />
+              <button className='flex items-center gap-1 rounded-2xl bg-surface pl-3 pr-2 py-1 hover:bg-border'>
+                <span className='text-[13px] font-medium text-foreground'>All</span>
+                <ChevronDown size={14} strokeWidth={2} className='text-foreground' />
               </button>
-              <button className='text-black hover:text-black'>
+              <button className='text-foreground hover:text-primary-800'>
                 <MoreHorizontal size={20} strokeWidth={2} />
               </button>
             </div>
           </div>
 
           {/* Add Item Card */}
-          <div className='ml-7 flex h-[110px] w-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-[#dcdcdc] transition-colors hover:bg-gray-300'>
-            <PlusCircle size={28} strokeWidth={1} className='text-black' />
-            <span className='text-[15px] font-medium text-black'>Add</span>
+          <div className='ml-7 flex h-[110px] w-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-[24px] bg-surface border border-border transition-colors hover:bg-border'>
+            <PlusCircle size={28} strokeWidth={1} className='text-text-main' />
+            <span className='text-[15px] font-medium text-text-main'>Add</span>
           </div>
         </div>
 
@@ -107,16 +108,16 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
           <div className='mb-4 flex items-center justify-between'>
             <div className='flex items-center'>
               <div className='flex w-7 items-center justify-start' />
-              <span className='text-[15px] font-bold text-black'>
+              <TextBody className='font-bold text-[15px] text-foreground'>
                 Itinerary
-              </span>
-              <span className='ml-4 pt-[2px] text-xs font-medium text-gray-500'>
+              </TextBody>
+              <TextBody className='ml-4 pt-[2px] text-xs font-medium text-text-muted'>
                 1 item
-              </span>
+              </TextBody>
             </div>
             <div className='flex items-center gap-3'>
-              <div className='h-3 w-3 rounded-full bg-gray-100' />
-              <button className='text-black hover:text-black'>
+              <div className='h-3 w-3 rounded-full bg-border' />
+              <button className='text-foreground hover:text-primary-800'>
                 <MoreHorizontal size={20} strokeWidth={2} />
               </button>
             </div>
@@ -124,12 +125,12 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
 
           <div className='flex cursor-pointer items-center'>
             <div className='flex w-7 items-center justify-start'>
-              <ChevronDown size={20} strokeWidth={2} className='text-black' />
+              <ChevronDown size={20} strokeWidth={2} className='text-foreground' />
             </div>
-            <span className='text-[15px] font-bold text-black'>Day 1</span>
-            <span className='ml-3 pt-[1px] text-[13px] text-gray-400'>
+            <TextBody className='font-bold text-[15px] text-foreground'>Day 1</TextBody>
+            <TextBody className='ml-3 pt-[1px] text-[13px] text-text-muted'>
               Add a title
-            </span>
+            </TextBody>
           </div>
         </div>
       </div>
