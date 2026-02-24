@@ -1,5 +1,5 @@
 import Chatbox from './_components/chatbox';
-import MapArea from "./_components/maparea";
+import MapArea from './_components/map-area';
 
 export default function ChatPage() {
   return (

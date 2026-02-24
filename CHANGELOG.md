@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-02-24
+
+### Added
+
+- Added `.prettierignore` file to exclude CHANGELOG.md, README.md, and CONTRIBUTING.md from automatic formatting
+
+### Changed
+
+- Refactored `MapArea` component file location from `maparea` to `map-area` for improved naming consistency
+
 ## [0.8.0] - 2026-02-23
 
 ### Added
@@ -30,8 +40,7 @@ and this project adheres to
 
 ### Changed
 
-- Updated chat page layout structure to support component-based chat and map
-  areas
+- Updated chat page layout structure to support component-based chat and map areas
 - Updated chat UI layout to separate Journey button from chat message area
 
 ### Removed
@@ -42,10 +51,8 @@ and this project adheres to
 
 ### Changed
 
-- Improved code formatting in `Sidebar` component using Prettier with Tailwind
-  CSS plugin
-- Refactored sidebar width classes from explicit pixel values to Tailwind
-  utility classes (`w-22`, `w-55`)
+- Improved code formatting in `Sidebar` component using Prettier with Tailwind CSS plugin
+- Refactored sidebar width classes from explicit pixel values to Tailwind utility classes (`w-22`, `w-55`)
 - Enhanced code consistency with standardized indentation and spacing
 
 ## [0.6.0] - 2026-02-15
@@ -59,8 +66,7 @@ and this project adheres to
 
 ### Changed
 
-- Refactored Sidebar from dynamic map loop to static `Link` components for
-  granular control
+- Refactored Sidebar from dynamic map loop to static `Link` components for granular control
 - Updated Sidebar styling to use "Attached" design (full-height, right border)
 - Improved Sidebar icon centering logic to handle collapsed state correctly
 - Fixed Sidebar toggle button animation to prevent layout shifts
@@ -70,8 +76,7 @@ and this project adheres to
 
 ### Added
 
-- Comprehensive CONTRIBUTING.md guide with development workflow, branching
-  conventions, commit standards, and versioning instructions
+- Comprehensive CONTRIBUTING.md guide with development workflow, branching conventions, commit standards, and versioning instructions
 - Tech stack section to README
 - Contributing section with quick start guide in README
 - Contact information (email and GitHub links) to README
@@ -83,17 +88,14 @@ and this project adheres to
 
 ### Fixed
 
-- Corrected clone URLs in README and CONTRIBUTING.md to point to correct
-  repository
+- Corrected clone URLs in README and CONTRIBUTING.md to point to correct repository
 
 ## [0.5.0] - 2026-02-14
 
 ### Changed
 
-- **BREAKING:** Restructured chat components into nested `_section` folder
-  structure
-- **BREAKING:** Moved `MapArea` and `Navbar` components to root components
-  folder
+- **BREAKING:** Restructured chat components into nested `_section` folder structure
+- **BREAKING:** Moved `MapArea` and `Navbar` components to root components folder
 - **BREAKING:** Moved global CSS from `app/` to dedicated `styles/` folder
 - Refactored Navbar component with updated styling and layout
 
@@ -104,8 +106,7 @@ and this project adheres to
 
 ### Removed
 
-- Unused SVG files from public folder (file.svg, globe.svg, lakbai-text.svg,
-  next.svg, vercel.svg, window.svg)
+- Unused SVG files from public folder (file.svg, globe.svg, lakbai-text.svg, next.svg, vercel.svg, window.svg)
 
 ## [0.4.3] - 2026-02-14
 
@@ -158,8 +159,7 @@ and this project adheres to
 
 ### Changed
 
-- Restructured components into `components/layout`, `components/chat`,
-  `components/map`
+- Restructured components into `components/layout`, `components/chat`,`components/map`
 - Redesigned Navbar layout and typography
 
 ## [0.2.0] - 2026-01-25
@@ -181,12 +181,11 @@ and this project adheres to
 ### Added
 
 - Initial release
-- CHANGELOG for a curated list of notable changes for each version of this
-  project
+- CHANGELOG for a curated list of notable changes for each version of this project
 - README for Getting Started on development
 
-[unreleased]:
-  https://github.com/lakbai-platform/lakbai-web/compare/v0.8.0...HEAD
+[unreleased]:https://github.com/lakbai-platform/lakbai-web/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.0...v0.6.1
