@@ -8,6 +8,19 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-02-26
+
+### Added
+
+- Supabase PostgreSQL database schemas (`User`, `POI`, `POIGallery`, `POIReview`, `POIVouch`, `POIFavorite`) via Prisma ORM
+- Database seeding script to bulk import Legazpi City points of interest from CSV
+- `GET /api/pois` API endpoint for dynamically fetching POI location and metadata 
+
+### Changed
+
+- Updated `MapArea` to fetch from the `/api/pois` endpoint for interactive `MapMarker` rendering
+- Dynamic, color-coded custom map pins automatically categorizing POIs via `lucide-react` icons
+
 ## [0.8.1] - 2026-02-24
 
 ### Added
@@ -184,7 +197,8 @@ and this project adheres to
 - CHANGELOG for a curated list of notable changes for each version of this project
 - README for Getting Started on development
 
-[unreleased]:https://github.com/lakbai-platform/lakbai-web/compare/v0.8.1...HEAD
+[unreleased]:https://github.com/lakbai-platform/lakbai-web/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/lakbai-platform/lakbai-web/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/lakbai-platform/lakbai-web/compare/v0.6.1...v0.7.0
