@@ -23,6 +23,15 @@ Website for lakbai navigation and routing system
    npm install
    ```
 
+3. Set up environment variables:
+   - Create a `.env` file in the root directory.
+   - Contact the team lead or check the internal team hub for the `DATABASE_URL` and `DIRECT_URL` connection strings and add them.
+
+4. Generate the Prisma Client (required for database models):
+   ```bash
+   npx prisma generate
+   ```
+
 ### Running Locally
 
 Run the development server:
