@@ -8,6 +8,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Initial Explore page layout with 50/50 split view
+- SearchBox component with category tabs and search input UI
+
 ## [0.9.0] - 2026-02-26
 
 ### Added
