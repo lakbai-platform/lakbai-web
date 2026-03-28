@@ -1,7 +1,18 @@
+import SearchBox from './_components/searchbox';
+{
+  /*import MapArea from './_components/maparea';*/
+}
+
 export default function ExplorePage() {
   return (
-    <div className="flex h-full items-center justify-center">
-      <h1 className="text-2xl font-semibold">Explore Page</h1>
+    <div className='flex h-screen w-full overflow-hidden'>
+      {/* LEFT 50% */}
+      <div className='w-1/2 border-r bg-white'>
+        <SearchBox />
+      </div>
+
+      {/* RIGHT 50% */}
+      <div className='w-1/2'>{/*<MapArea />*/}</div>
     </div>
   );
 }
