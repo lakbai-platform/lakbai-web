@@ -10,6 +10,12 @@ and this project adheres to
 
 ### Added
 
+- Journey card component displaying title, location, and duration
+- Journey page with empty state layout and journey list component layout
+- Journey page base structure with initial layout
+
+### Added
+
 - Initial Explore page layout with 50/50 split view
 - SearchBox component with category tabs and search input UI
 
