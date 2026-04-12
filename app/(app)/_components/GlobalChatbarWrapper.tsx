@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Chatbar from '../chat/_components/chatbar';
-import NewJourneyModal from './new-journey-modal';
 import { useRouter } from 'next/navigation';
+import Chatbar from '../chat/_components/chatbar';
+import NewJourneyModal from './NewJourneyModal';
+import { createBlankChat, createJourneyChat } from '@/lib/chat-api';
 
 export default function GlobalChatbarWrapper({ 
   initialChats, 
@@ -32,22 +33,22 @@ export default function GlobalChatbarWrapper({
     };
   }, []);
 
+  const handleNewChat = async () => {
+    const chat = await createBlankChat();
+    if (chat) {
+      setIsOpen(false);
+      router.refresh();
+      router.push(`/chat/${chat.id}`);
+    }
+  };
+
   const handleModalSubmit = async (newJourneyData: any) => {
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isNewContext: true, newJourneyData })
-      });
-      const data = await res.json();
-      if (data.chat) {
-        setIsOpen(false);
-        setIsModalOpen(false);
-        router.refresh();
-        router.push(`/chat/${data.chat.id}`);
-      }
-    } catch (e) {
-      console.error(e);
+    const result = await createJourneyChat(newJourneyData);
+    if (result) {
+      setIsOpen(false);
+      setIsModalOpen(false);
+      router.refresh();
+      router.push(`/chat/${result.chat.id}`);
     }
   };
 
@@ -59,21 +60,7 @@ export default function GlobalChatbarWrapper({
             <Chatbar 
               chats={initialChats}
               journeys={initialJourneys}
-              onNewChat={async () => {
-                try {
-                  const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ isNewContext: true, isBlank: true })
-                  });
-                  const data = await res.json();
-                  if (data.chat) {
-                    setIsOpen(false);
-                    router.refresh();
-                    router.push(`/chat/${data.chat.id}`);
-                  }
-                } catch(e) { console.error(e); }
-              }} 
+              onNewChat={handleNewChat}
               onNewJourney={() => {
                 setIsOpen(false);
                 setIsModalOpen(true);

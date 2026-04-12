@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Sidebar } from './_components/Sidebar';
-import GlobalChatbarWrapper from './_components/global-chatbar-wrapper';
+import GlobalChatbarWrapper from './_components/GlobalChatbarWrapper';
 import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {

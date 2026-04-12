@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BadgePlus, Luggage } from 'lucide-react';
 import { TextHeading, TextBody } from '@/components/text';
 import JourneyCard from '../journey-card';
-import NewJourneyModal from '../../../_components/new-journey-modal';
+import NewJourneyModal from '../../../_components/NewJourneyModal';
 
 export default function JourneyList({ initialJourneys }: { initialJourneys: any[] }) {
   const router = useRouter();

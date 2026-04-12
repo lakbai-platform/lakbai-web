@@ -14,12 +14,13 @@ import {
   Trash2
 } from 'lucide-react';
 import { TextBody, TextHeading } from '@/components/text';
+import { createBlankChat, linkJourneyToChat } from '@/lib/chat-api';
 
 type ChatboxProps = {
   onOpenNewJourneyModal?: () => void;
 };
 
-import NewJourneyModal from '../../../_components/new-journey-modal';
+import NewJourneyModal from '../../../_components/NewJourneyModal';
 
 export default function Chatbox({ onOpenNewJourneyModal }: ChatboxProps) {
   const [message, setMessage] = useState('');
@@ -50,15 +51,8 @@ export default function Chatbox({ onOpenNewJourneyModal }: ChatboxProps) {
         
         // Only redirect if the chat genuinely doesn't exist (404)
         if (res.status === 404) {
-          const resBlank = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isNewContext: true, isBlank: true })
-          });
-          const dataBlank = await resBlank.json();
-          if (dataBlank.chat) {
-            router.replace(`/chat/${dataBlank.chat.id}`);
-          }
+          const chat = await createBlankChat();
+          if (chat) router.replace(`/chat/${chat.id}`);
           return;
         }
 
@@ -109,27 +103,13 @@ export default function Chatbox({ onOpenNewJourneyModal }: ChatboxProps) {
   };
 
   const handleLocalModalSubmit = async (newJourneyData: any) => {
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isNewContext: true,
-          updateJourneyContext: true,
-          chatId: chat.id,
-          newJourneyData
-        })
-      });
-      const data = await res.json();
-      if (data.chat) {
-        setIsLocalModalOpen(false);
-        setJourney(data.journey);
-        setChat(data.chat);
-        setMessages(data.chat.messages || []);
-        router.refresh();
-      }
-    } catch(e) {
-      console.error(e);
+    const result = await linkJourneyToChat(chat.id, newJourneyData);
+    if (result) {
+      setIsLocalModalOpen(false);
+      setJourney(result.journey);
+      setChat(result.chat);
+      setMessages(result.chat.messages || []);
+      router.refresh();
     }
   };
 
