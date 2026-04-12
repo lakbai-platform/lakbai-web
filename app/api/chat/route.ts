@@ -1,0 +1,281 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { message, chatId, journeyId, isNewContext, newJourneyData } = body;
+
+    let journey;
+    let chat;
+    let previousMessages: any[] = [];
+
+    // System instruction to apply to all queries
+    const systemInstruction = `
+You are an expert AI Travel Planner.
+Your goal is to parse user intents, provide helpful conversational responses, and seamlessly update the underlying Journey database object in the background.
+
+Whenever you respond, you MUST output a STRICT JSON object answering to the following schema EXACTLY.
+Make sure the conversational reply is inside the "aiText" field.
+{
+  "aiText": "A friendly conversational response to the user's request. This is what the user will read.",
+  "updatedTitle": "A catchy name for the journey",
+  "updatedDestination": "The main city or location (optional)",
+  "updatedBudget": 500,
+  "itinerary": [
+    {
+      "dayNumber": 1,
+      "poiId": "string (must exactly match a provided POI ID)",
+      "orderIndex": 0
+    }
+  ]
+}
+Only output the raw JSON. Not wrapped in markdown blocks.
+`;
+
+    // 1. Initial State (isNewContext === true)
+    if (isNewContext && newJourneyData) {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+      
+      // Create Database entities directly using explicit modal data constraints
+      journey = await prisma.journey.create({
+        data: {
+          title: `Trip to ${newJourneyData.destination}`,
+          destination: newJourneyData.destination,
+          companions: newJourneyData.companions,
+          preferences: newJourneyData.preferences,
+          budget: 0,
+          startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
+          endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
+          isFlexibleDates: newJourneyData.dates?.isFlexible || false,
+        }
+      });
+      
+      chat = await prisma.chat.create({
+        data: {
+          journeyId: journey.id,
+          title: `Trip to ${newJourneyData.destination}`
+        }
+      });
+
+      const initPrompt = `
+      ${systemInstruction}
+      
+      The user just created a new journey with these explicit parameters:
+      Destination: ${newJourneyData.destination}
+      Companions: ${newJourneyData.companions}
+      Preferences: ${newJourneyData.preferences}
+      Dates Flexible: ${newJourneyData.dates?.isFlexible}
+      
+      Do not build the full itinerary yet. Return an empty itinerary for now, just establish the updatedTitle and updatedDestination. Fill aiText with an enthusiastic outgoing greeting acknowledging their constraints and asking what kinds of experiences they are initially looking for in ${newJourneyData.destination}!
+      `;
+      
+      const result = await model.generateContent(initPrompt);
+      const resText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      let aiData;
+      try {
+        aiData = JSON.parse(resText);
+      } catch (e) {
+        aiData = { aiText: "Let's plan your trip! What kind of places do you want to visit?", updatedTitle: journey.title };
+      }
+
+      // Save initial greet message
+      const aiMsg = await prisma.message.create({
+        data: { chatId: chat.id, role: 'ai', content: aiData.aiText }
+      });
+      
+      return NextResponse.json({ 
+         chat: { ...chat, messages: [{ role: 'ai', content: aiData.aiText }] }, 
+         journey,
+         aiText: aiData.aiText
+      });
+    }
+
+    // 2. Continuing an existing chat
+    if (!chatId || !journeyId) {
+      return NextResponse.json({ error: "Missing IDs" }, { status: 400 });
+    }
+
+    journey = await prisma.journey.findUnique({
+      where: { id: journeyId },
+      include: { itineraryItems: { include: { poi: true } } }
+    });
+    
+    chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+      include: { messages: { orderBy: { createdAt: 'asc' } } }
+    });
+
+    if (!journey || !chat) return NextResponse.json({ error: "Data not found" }, { status: 404 });
+
+    // Save the incoming user message to memory immediately
+    await prisma.message.create({
+      data: { chatId: chat.id, role: 'user', content: message }
+    });
+
+    // Formatting Context POIs
+    let pois = await prisma.pOI.findMany({
+      where: journey.destination ? {
+        OR: [
+          { city: { contains: journey.destination, mode: 'insensitive' } },
+          { province: { contains: journey.destination, mode: 'insensitive' } },
+          { name: { contains: journey.destination, mode: 'insensitive' } }
+        ]
+      } : {},
+      take: 20
+    });
+    if (pois.length === 0) pois = await prisma.pOI.findMany({ take: 20 });
+    const contextPois = pois.map(p => ({ id: p.id, name: p.name, description: p.description }));
+
+    // Prepare History Array
+    const history = chat.messages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
+
+    const chatSession = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" }).startChat({
+       history: history
+    });
+
+    const activePrompt = `
+      ${systemInstruction}
+      
+      Current Live Journey State:
+      Destination: ${journey.destination}
+      Budget: ${journey.budget}
+      Current Itinerary Setup: ${JSON.stringify(journey.itineraryItems.map(i => ({ day: i.dayNumber, poi: i.poi.name })))}
+      
+      Available POIs in database for this region:
+      ${JSON.stringify(contextPois)}
+      
+      User's Latest Message: "${message}"
+      
+      Update the journey as requested by the user, and respond to them!
+    `;
+
+    const result = await chatSession.sendMessage(activePrompt);
+    const resText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    let aiData;
+    try {
+      aiData = JSON.parse(resText);
+    } catch {
+      console.error('Failed to parse AI JSON', resText);
+       // Emergency fallback message
+       aiData = { aiText: resText, itinerary: null };
+    }
+
+    // Apply DB Updates
+    if (aiData.updatedBudget || aiData.updatedTitle) {
+      await prisma.journey.update({
+        where: { id: journey.id },
+        data: {
+          budget: aiData.updatedBudget || journey.budget,
+          title: aiData.updatedTitle || journey.title,
+        }
+      });
+    }
+
+    // Refresh Itinerary
+    if (aiData.itinerary && Array.isArray(aiData.itinerary)) {
+      await prisma.itineraryItem.deleteMany({ where: { journeyId: journey.id } });
+      for (const item of aiData.itinerary) {
+        if (!item.poiId) continue;
+        await prisma.itineraryItem.create({
+          data: {
+            journeyId: journey.id,
+            poiId: item.poiId,
+            dayNumber: item.dayNumber || 1,
+            orderIndex: item.orderIndex || 0
+          }
+        });
+      }
+    }
+
+    // Save AI Message
+    if (aiData.aiText) {
+      await prisma.message.create({
+        data: { chatId: chat.id, role: 'ai', content: aiData.aiText }
+      });
+    }
+
+    const updatedJourney = await prisma.journey.findUnique({
+      where: { id: journey.id },
+      include: {
+        itineraryItems: {
+          include: { poi: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
+        }
+      }
+    });
+    
+    const updatedChat = await prisma.chat.findUnique({
+      where: { id: chat.id },
+      include: { messages: { orderBy: { createdAt: 'asc' } } }
+    });
+
+    return NextResponse.json({ journey: updatedJourney, chat: updatedChat });
+  } catch (error) {
+    console.error("AI Route Error:", error);
+    return NextResponse.json({ error: "Failed to process AI" }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+
+    const chat = await prisma.chat.findUnique({
+      where: { id },
+      include: { messages: { orderBy: { createdAt: 'asc' } } }
+    });
+
+    if (!chat) return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+
+    const journey = await prisma.journey.findUnique({
+      where: { id: chat.journeyId },
+      include: {
+        itineraryItems: {
+          include: { poi: true },
+          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
+        }
+      }
+    });
+
+    return NextResponse.json({ chat, journey });
+  } catch (error) {
+    console.error("GET Chat Error:", error);
+    return NextResponse.json({ error: "Failed to fetch chat" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+    const id = searchParams.get('id');
+
+    if (!type || !id) {
+      return NextResponse.json({ error: "Missing type or id" }, { status: 400 });
+    }
+
+    if (type === 'chat') {
+      await prisma.chat.delete({ where: { id } });
+    } else if (type === 'journey') {
+      await prisma.journey.delete({ where: { id } });
+    } else {
+      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE Error:", error);
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+  }
+}

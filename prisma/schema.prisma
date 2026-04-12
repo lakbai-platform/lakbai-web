@@ -22,6 +22,7 @@ model User {
   reviews        POIReview[]
   vouches        POIVouch[]
   favorites      POIFavorite[]
+  journeys       Journey[]
 
   createdAt      DateTime       @default(now())
 }
@@ -41,6 +42,12 @@ model POI {
   reviews          POIReview[]
   vouches          POIVouch[]
   favorites        POIFavorite[]
+  itineraryItems   ItineraryItem[]
+  
+  city             String?
+  province         String?
+  state            String?
+  country          String?
 
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -110,4 +117,62 @@ model POIFavorite {
   createdAt DateTime @default(now())
 
   @@unique([poiId, userId]) 
+}
+
+model Journey {
+  id              String         @id @default(cuid())
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?        @db.Text
+  destination     String?
+  startDate       DateTime?
+  endDate         DateTime?
+  isFlexibleDates Boolean        @default(false)
+  companions      String?        
+  preferences     String?        @db.Text
+  budget          Int?
+  
+  chats           Chat[]
+  itineraryItems  ItineraryItem[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Chat {
+  id              String         @id @default(cuid())
+  journeyId       String
+  journey         Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  title           String
+  
+  messages        Message[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Message {
+  id              String         @id @default(cuid())
+  chatId          String
+  chat            Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role            String         // "user" or "ai"
+  content         String         @db.Text
+  
+  createdAt       DateTime       @default(now())
+}
+
+model ItineraryItem {
+  id              String         @id @default(cuid())
+  journeyId       String
+  journey         Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  poiId           String
+  poi             POI            @relation(fields: [poiId], references: [id], onDelete: Cascade)
+  dayNumber       Int            
+  orderIndex      Int            
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  @@unique([journeyId, poiId, dayNumber]) 
 }

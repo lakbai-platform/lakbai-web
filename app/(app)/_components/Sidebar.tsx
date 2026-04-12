@@ -99,6 +99,13 @@ export function Sidebar() {
         {/* Chat */}
         <Link
           href='/chat'
+          onClick={(e) => {
+            setIsCollapsed(prev => !prev);
+            if (pathname.startsWith('/chat')) {
+              e.preventDefault();
+              window.dispatchEvent(new CustomEvent('toggle-chat-popup'));
+            }
+          }}
           className={cn(
             'group/link flex items-center transition-colors',
             isCollapsed

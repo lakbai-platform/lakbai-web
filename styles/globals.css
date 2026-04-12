@@ -12,6 +12,7 @@
 
   --border: #E2E8F0;
   --surface: #FAFBFC;
+  --surface-light: #F5F5F5;
   --text--muted: #3A5059;
   --text--main: #102E38;
 
@@ -20,7 +21,8 @@
   --primary-800: #00363e;
   --primary-700: #014c56;
   --primary-600: #016673;
-  --primary-500: #028090; /* Our primary color*/
+  --primary-500: #028090;
+  /* Our primary color*/
   --primary-400: #039cb0;
   --primary-300: #05b9d0;
   --primary-200: #06daf4;
@@ -109,6 +111,7 @@
   --color-foreground: var(--foreground);
   --color-border: var(--border);
   --color-surface: var(--surface);
+  --color-surface-light: var(--surface-light);
   --color-text-muted: var(--text--muted);
   --color-text-main: var(--text--main);
 
@@ -351,14 +354,17 @@ body {
 
 @layer base {
   .maplibregl-popup-content {
-    @apply bg-transparent! shadow-none! p-0! rounded-none!;
+    @apply !bg-transparent !shadow-none !p-0 !rounded-none;
   }
+
   .maplibregl-popup-tip {
-    @apply hidden!;
+    @apply !hidden;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

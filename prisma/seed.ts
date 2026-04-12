@@ -54,6 +54,10 @@ async function main() {
                 latitude: parseFloat(lat),
                 longitude: parseFloat(long),
                 operatingHours: '9:00 AM - 5:00 PM', // Dummy data
+                city: 'Legazpi',
+                province: 'Albay',
+                state: 'Bicol',
+                country: 'Philippines',
                 tags: tagData,
             },
             include: {
@@ -61,10 +65,10 @@ async function main() {
             }
         });
 
-        console.log(`Created POI: ${poi.name} | Tags: ${poi.tags.map((t: any) => t.name).join(', ')}`);
-    }
+    console.log(`Created POI: ${poi.name} | Tags: ${poi.tags.map((t: any) => t.name).join(', ')}`);
+}
 
-    console.log('Seeding completed successfully!');
+console.log('Seeding completed successfully!');
 }
 
 main()

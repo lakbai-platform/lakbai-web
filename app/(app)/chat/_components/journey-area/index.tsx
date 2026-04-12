@@ -7,24 +7,37 @@ import {
   Navigation, 
   ChevronDown, 
   MoreHorizontal,
-  PlusCircle
+  PlusCircle,
+  MapPin
 } from 'lucide-react';
 import { TextHeading, TextBody } from '@/components/text';
 
 type JourneyAreaProps = {
   open: boolean;
   onClose: () => void;
+  journey?: any;
 };
 
-export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
+export default function JourneyArea({ open, onClose, journey }: JourneyAreaProps) {
   if (!open) return null;
+  
+  // Group itinerary items by day Number
+  const itineraryGroups = journey?.itineraryItems?.reduce((acc: any, item: any) => {
+    const day = item.dayNumber || 1;
+    if (!acc[day]) acc[day] = [];
+    acc[day].push(item);
+    return acc;
+  }, {}) || {};
+
+  const days = Object.keys(itineraryGroups).sort((a,b) => parseInt(a) - parseInt(b));
+  const totalItems = journey?.itineraryItems?.length || 0;
 
   return (
     <div className='absolute inset-0 z-10 flex flex-col bg-background'>
       {/* Header */}
       <div className='relative flex items-center justify-between px-6 pb-4 pt-6'>
-        <TextHeading className='text-[28px] tracking-tight text-text-main'>
-          Journey Title
+        <TextHeading className='text-[28px] tracking-tight text-text-main pr-10'>
+          {journey?.title || 'Journey Title'}
         </TextHeading>
         <button
           onClick={onClose}
@@ -34,16 +47,22 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
         </button>
       </div>
 
-      {/* 3 Pills */}
-      <div className='flex gap-2.5 px-6 pb-5'>
-        {['Where', 'When', 'Who'].map((label) => (
-          <button
-            key={label}
-            className='rounded-3xl border border-text-main px-5 py-1 text-[15px] text-text-main hover:bg-surface'
-          >
-            {label}
+      {/* Connected Pills */}
+      <div className='px-6 pb-5'>
+        <div className='inline-flex items-center rounded-3xl border border-text-main overflow-hidden'>
+          <button className='px-5 py-1.5 text-[14px] font-medium border-r border-text-main text-text-main hover:bg-surface'>
+            {journey?.destination || 'Where'}
           </button>
-        ))}
+          <button className='px-5 py-1.5 text-[14px] font-medium border-r border-text-main text-text-main hover:bg-surface'>
+            {journey?.isFlexibleDates ? 'Flexible' : (journey?.startDate ? new Date(journey.startDate).toLocaleDateString() : 'Date')}
+          </button>
+          <button className='px-5 py-1.5 text-[14px] font-medium border-r border-text-main text-text-main hover:bg-surface'>
+            {journey?.companions || 'How many'}
+          </button>
+          <button className='px-5 py-1.5 text-[14px] font-medium text-text-main hover:bg-surface'>
+            {journey?.budget ? `Budget: ${journey.budget}` : 'Budget'}
+          </button>
+        </div>
       </div>
 
       {/* Tabs Row */}
@@ -73,6 +92,7 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
 
       {/* Journey Content */}
       <div className='flex-1 overflow-y-auto px-6 py-6'>
+        
         {/* Basecamp Section */}
         <div className='group mb-8'>
           <div className='mb-3 flex items-center justify-between'>
@@ -82,7 +102,7 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
               </div>
               <TextBody className='font-bold text-[15px] text-foreground'>Basecamp</TextBody>
               <TextBody className='ml-3 pt-[2px] text-xs font-medium text-text-muted'>
-                1 item
+                0 items
               </TextBody>
             </div>
             <div className='flex items-center gap-2'>
@@ -97,9 +117,11 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
           </div>
 
           {/* Add Item Card */}
-          <div className='ml-7 flex h-[110px] w-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-[24px] bg-surface border border-border transition-colors hover:bg-border'>
-            <PlusCircle size={28} strokeWidth={1} className='text-text-main' />
-            <span className='text-[15px] font-medium text-text-main'>Add</span>
+          <div className='ml-7 flex h-[100px] w-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-[#DFDFDF] transition-colors hover:bg-[#D0D0D0]'>
+            <div className='rounded-full border border-text-main p-0.5'>
+               <PlusCircle size={18} strokeWidth={1.5} className='text-text-main' />
+            </div>
+            <span className='text-[13px] font-bold text-text-main'>Add</span>
           </div>
         </div>
 
@@ -112,26 +134,54 @@ export default function JourneyArea({ open, onClose }: JourneyAreaProps) {
                 Itinerary
               </TextBody>
               <TextBody className='ml-4 pt-[2px] text-xs font-medium text-text-muted'>
-                1 item
+                {totalItems} item{totalItems !== 1 ? 's' : ''}
               </TextBody>
             </div>
             <div className='flex items-center gap-3'>
-              <div className='h-3 w-3 rounded-full bg-border' />
+              <div className='h-4 w-4 shrink-0 rounded-full bg-slate-100' />
               <button className='text-foreground hover:text-primary-800'>
                 <MoreHorizontal size={20} strokeWidth={2} />
               </button>
             </div>
           </div>
 
-          <div className='flex cursor-pointer items-center'>
-            <div className='flex w-7 items-center justify-start'>
-              <ChevronDown size={20} strokeWidth={2} className='text-foreground' />
+          {days.length === 0 ? (
+            <div className='pl-7 text-sm text-text-muted'>
+              No itinerary items yet. Ask AI to generate one or add manually!
             </div>
-            <TextBody className='font-bold text-[15px] text-foreground'>Day 1</TextBody>
-            <TextBody className='ml-3 pt-[1px] text-[13px] text-text-muted'>
-              Add a title
-            </TextBody>
-          </div>
+          ) : (
+            days.map((day) => (
+              <div key={day} className='mb-6'>
+                <div className='flex cursor-pointer items-center mb-3'>
+                  <div className='flex w-7 items-center justify-start'>
+                    <ChevronDown size={20} strokeWidth={2} className='text-foreground' />
+                  </div>
+                  <TextBody className='font-bold text-[15px] text-foreground'>Day {day}</TextBody>
+                </div>
+                
+                {/* Items for this day */}
+                <div className='ml-7 flex flex-col gap-3 pb-2'>
+                  {itineraryGroups[day].map((item: any) => (
+                    <div key={item.id} className='rounded-xl border border-border bg-surface p-3 flex gap-3 items-start'>
+                      <div className='bg-primary-100 text-primary-800 p-2 rounded-full shrink-0 mt-0.5'>
+                        <MapPin size={16} />
+                      </div>
+                      <div className='flex flex-col'>
+                         <span className='text-sm font-bold'>{item.poi?.name}</span>
+                         <span className='text-xs text-text-muted mt-1'>{item.poi?.description?.substring(0, 80)}...</span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Add Item Card inline */}
+                  <div className='flex h-10 w-28 cursor-pointer flex-row items-center justify-center gap-2 rounded-xl bg-surface border border-border transition-colors hover:bg-border mt-1'>
+                    <PlusCircle size={16} strokeWidth={1.5} className='text-text-main' />
+                    <span className='text-xs font-medium text-text-main'>Add</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
