@@ -1,16 +1,17 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Edit, SquarePlus, Ellipsis, Trash2} from 'lucide-react';
+import { Search, Edit, BadgePlus, Ellipsis, Trash2} from 'lucide-react';
 import { TextBody } from '@/components/text';
 
 type ChatbarProps = { 
   chats: any[]; 
   journeys: any[]; 
   onNewChat: () => void; 
+  onNewJourney: () => void;
 };
 
-export default function Chatbar({ chats, journeys, onNewChat }: ChatbarProps) {
+export default function Chatbar({ chats, journeys, onNewChat, onNewJourney }: ChatbarProps) {
   const router = useRouter();
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
@@ -54,10 +55,10 @@ export default function Chatbar({ chats, journeys, onNewChat }: ChatbarProps) {
           </button>
           
           <button
-            onClick={onNewChat}
+            onClick={onNewJourney}
             className='flex items-center gap-3 rounded-lg px-2 py-2 text-[15px] font-medium transition-colors hover:bg-surface'
           >
-            <SquarePlus size={18} className='text-text-main' />
+            <BadgePlus size={18} className='text-text-main' />
             <span className='ml-2'>New journey</span>
           </button>
         </div>

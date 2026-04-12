@@ -96,26 +96,18 @@ export function Sidebar() {
           isCollapsed ? 'items-center px-0' : 'px-4'
         )}
       >
-        {/* Chat */}
-        <Link
-          href='/chat'
+        {/* Chat - Global Overlay Toggle */}
+        <button
           onClick={(e) => {
-            setIsCollapsed(prev => !prev);
-            if (pathname.startsWith('/chat')) {
-              e.preventDefault();
-              window.dispatchEvent(new CustomEvent('toggle-chat-popup'));
-            }
+            e.preventDefault();
+            setIsCollapsed(true); // Close the global sidebar on click to focus the popup
+            window.dispatchEvent(new CustomEvent('toggle-chat-popup'));
           }}
           className={cn(
-            'group/link flex items-center transition-colors',
+            'group/link flex items-center transition-colors text-text-muted hover:text-text-main hover:bg-slate-100',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
-              : 'w-full rounded-lg px-3 py-3',
-            pathname.startsWith('/chat')
-              ? isCollapsed
-                ? 'bg-primary-50 text-primary-600'
-                : 'text-primary-600 bg-transparent'
-              : 'text-text-muted hover:text-text-main hover:bg-slate-100'
+              : 'w-full rounded-lg px-3 py-3'
           )}
         >
           <MessageCircle size={24} strokeWidth={2} className='shrink-0' />
@@ -127,7 +119,7 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Chat</span>
           </div>
-        </Link>
+        </button>
 
         {/* Journey */}
         <Link

@@ -16,12 +16,12 @@ import {
 import { TextBody, TextHeading } from '@/components/text';
 
 type ChatboxProps = {
-  chatbarOpen: boolean;
-  onToggleSidebar?: () => void; // Optional now that layout handles popup
-  onOpenNewChatModal?: () => void;
+  onOpenNewJourneyModal?: () => void;
 };
 
-export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProps) {
+import NewJourneyModal from '../../../_components/new-journey-modal';
+
+export default function Chatbox({ onOpenNewJourneyModal }: ChatboxProps) {
   const [message, setMessage] = useState('');
   const [journeyOpen, setJourneyOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -30,12 +30,12 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
   const [journey, setJourney] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [isLocalModalOpen, setIsLocalModalOpen] = useState(false);
 
   const params = useParams();
   const chatId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
 
-  // Load chat and journey automatically when a chatId is in the URL
   useEffect(() => {
     if (!chatId) {
        setChat(null);
@@ -47,11 +47,25 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
     async function fetchChat() {
       try {
         const res = await fetch(`/api/chat?id=${chatId}`);
+        
+        // Only redirect if the chat genuinely doesn't exist (404)
+        if (res.status === 404) {
+          const resBlank = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isNewContext: true, isBlank: true })
+          });
+          const dataBlank = await resBlank.json();
+          if (dataBlank.chat) {
+            router.replace(`/chat/${dataBlank.chat.id}`);
+          }
+          return;
+        }
+
         const data = await res.json();
-        if (data.chat && data.journey) {
+        if (data.chat) {
           setChat(data.chat);
-          setJourney(data.journey);
-          // Set messages from the db
+          setJourney(data.journey || null); // journey may be null for blank chats
           setMessages(data.chat.messages || []);
         }
       } catch (err) {
@@ -59,7 +73,7 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
       }
     }
     fetchChat();
-  }, [chatId]);
+  }, [chatId, router]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || !chat) return;
@@ -94,6 +108,32 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
     setIsAiTyping(false);
   };
 
+  const handleLocalModalSubmit = async (newJourneyData: any) => {
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isNewContext: true,
+          updateJourneyContext: true,
+          chatId: chat.id,
+          newJourneyData
+        })
+      });
+      const data = await res.json();
+      if (data.chat) {
+        setIsLocalModalOpen(false);
+        setJourney(data.journey);
+        setChat(data.chat);
+        setMessages(data.chat.messages || []);
+        router.refresh();
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
+  const isBlankJourney = !chat?.journeyId;
   const poiCount = journey?.itineraryItems?.length || 0;
   const chatTitle = chat?.title || journey?.title || 'Start a new journey';
 
@@ -103,16 +143,26 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
       {chat && (
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <button
-              onClick={() => setJourneyOpen(true)}
-              className='flex items-center gap-2 rounded-full border border-text-muted bg-background py-[6px] pl-3 pr-[6px] shadow-sm hover:bg-surface'
-            >
-              <Luggage size={18} strokeWidth={2} className='text-text-main' />
-              <span className='text-[15px] font-medium text-text-main'>Journey</span>
-              <div className='flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white'>
-                {poiCount}
-              </div>
-            </button>
+            {isBlankJourney ? (
+              <button
+                onClick={() => setIsLocalModalOpen(true)}
+                className='flex items-center gap-2 rounded-full border border-text-muted bg-primary-600 py-[6px] pl-4 pr-4 shadow-sm hover:bg-primary-700 transition-colors'
+              >
+                <Luggage size={18} strokeWidth={2} className='text-white' />
+                <span className='text-[15px] font-medium text-white'>Create a Journey</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setJourneyOpen(true)}
+                className='flex items-center gap-2 rounded-full border border-text-muted bg-background py-[6px] pl-3 pr-[6px] shadow-sm hover:bg-surface'
+              >
+                <Luggage size={18} strokeWidth={2} className='text-text-main' />
+                <span className='text-[15px] font-medium text-text-main'>Journey</span>
+                <div className='flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white'>
+                  {poiCount}
+                </div>
+              </button>
+            )}
           </div>
 
           <button className='flex h-9 w-9 items-center justify-center rounded-full border border-text-muted bg-background text-text-main shadow-sm hover:bg-surface'>
@@ -122,21 +172,7 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
       )}
 
       {/* Main Container */}
-      {!chat ? (
-        /* NULL STATE UI */
-        <div className='flex flex-1 flex-col items-center justify-center p-8 text-center'>
-           <TextHeading className='text-[32px] font-bold text-text-main mb-4'>Ready to explore?</TextHeading>
-           <TextBody className='text-text-muted mb-8 max-w-md'>
-             Select an existing trip from your sidebar, or create a new journey to start planning with AI.
-           </TextBody>
-           <button 
-             onClick={onOpenNewChatModal}
-             className='rounded-xl bg-primary-600 px-6 py-3 font-bold text-white transition-opacity hover:opacity-90'
-           >
-             Plan a New Journey
-           </button>
-        </div>
-      ) : (
+      {chat && (
         /* ACTIVE CHAT UI */
         <div className='flex flex-1 flex-col overflow-hidden rounded-[24px] border border-text-muted bg-background'>
           
@@ -238,6 +274,13 @@ export default function Chatbox({ chatbarOpen, onOpenNewChatModal }: ChatboxProp
           journey={journey}
         />
       )}
+
+      {/* Local Modal specifically updating current chat session exclusively */}
+      <NewJourneyModal 
+        open={isLocalModalOpen} 
+        onClose={() => setIsLocalModalOpen(false)} 
+        onSubmit={handleLocalModalSubmit}
+      />
     </div>
   );
 }

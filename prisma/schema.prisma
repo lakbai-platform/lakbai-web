@@ -142,8 +142,8 @@ model Journey {
 
 model Chat {
   id              String         @id @default(cuid())
-  journeyId       String
-  journey         Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  journeyId       String?
+  journey         Journey?       @relation(fields: [journeyId], references: [id], onDelete: Cascade)
   title           String
   
   messages        Message[]

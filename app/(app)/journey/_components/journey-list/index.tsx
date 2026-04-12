@@ -1,100 +1,115 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BadgePlus, Luggage } from 'lucide-react';
 import { TextHeading, TextBody } from '@/components/text';
 import JourneyCard from '../journey-card';
+import NewJourneyModal from '../../../_components/new-journey-modal';
 
-type Journey = {
-  id: string;
-  title: string;
-  location: string;
-  days: number;
-};
+export default function JourneyList({ initialJourneys }: { initialJourneys: any[] }) {
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-export default function JourneyList() {
-  // 🔁 Toggle this to test UI
-  const journeys: Journey[] = [
-    {
-      id: '1',
-      title: 'Bicol Adventure',
-      location: 'Legazpi City, Albay',
-      days: 5
-    },
-    {
-      id: '2',
-      title: 'Food Trip Weekend',
-      location: 'Naga City, Camarines Sur',
-      days: 2
-    },
-    {
-      id: '3',
-      title: 'Food Trip Weekend',
-      location: 'Naga City, Camarines Sur',
-      days: 2
+  const handleModalSubmit = async (newJourneyData: any) => {
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isNewContext: true,
+          newJourneyData
+        })
+      });
+      const data = await res.json();
+      if (data.chat) {
+        setIsModalOpen(false);
+        router.push(`/chat/${data.chat.id}`);
+      }
+    } catch (e) {
+      console.error(e);
     }
-  ];
+  };
 
-  // const journeys: Journey[] = []; // ← use this to test empty state
-
-  if (journeys.length === 0) {
+  if (!initialJourneys || initialJourneys.length === 0) {
     return (
-      <div className='flex h-full w-full flex-col p-6'>
+      <div className='flex h-full w-full flex-col bg-white'>
         {/* Header */}
-        <div className='mb-6 flex items-center justify-between'>
-          <TextHeading className='text-text-main'>My Journeys</TextHeading>
+        <div className='relative z-10 flex items-center justify-between px-8 py-10'>
+          <TextHeading className='text-[36px] font-bold text-black'>My Journeys</TextHeading>
 
-          <button className='bg-primary-600 hover:bg-primary-700 flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white transition-colors'>
-            <BadgePlus size={16} />
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className='flex items-center gap-2 rounded-full bg-[#008A90] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90'
+          >
+            <BadgePlus size={18} />
             New Journey
           </button>
         </div>
 
         {/* Empty State (Centered) */}
-        <div className='flex flex-1 items-center justify-center'>
+        <div className='flex flex-1 items-center justify-center -mt-20'>
           <div className='flex flex-col items-center text-center'>
-            {/* Icon */}
-            <div className='bg-primary-50 mb-8 flex h-24 w-24 items-center justify-center rounded-full'>
-              <Luggage className='text-primary-600 h-12 w-12' />
+            {/* Gradient Icon */}
+            <div className='mb-6 flex h-[100px] w-[100px] items-center justify-center rounded-full bg-gradient-to-b from-[#1F677A] to-[#C9F0F4]'>
+              <Luggage size={40} strokeWidth={1} className='text-white' />
             </div>
 
             {/* Title */}
-            <TextHeading className='text-text-main mb-3 text-[24px] font-semibold'>
+            <TextHeading className='mb-3 text-[20px] font-bold text-black'>
               No journeys yet
             </TextHeading>
 
             {/* Description */}
-            <TextBody className='text-text-muted mb-8 max-w-[380px] text-base'>
-              Start planning your next adventure by creating your first journey.
+            <TextBody className='mb-8 max-w-[340px] text-[16px] leading-relaxed text-black font-normal'>
+              Start planning your next trip! Map out your adventure now and we'll keep it safe here.
             </TextBody>
 
-            {/* Button */}
-            <button className='bg-primary-600 hover:bg-primary-700 flex items-center gap-2 rounded-full px-7 py-3.5 text-base font-medium text-white transition-colors'>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className='rounded-[24px] bg-[#00A1A7] px-8 py-3 text-[15px] font-medium text-white shadow-sm transition-opacity hover:opacity-90'
+            >
               Create a Journey
             </button>
           </div>
         </div>
+        
+        <NewJourneyModal 
+          open={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onSubmit={handleModalSubmit} 
+        />
       </div>
     );
   }
 
   return (
-    <div className='flex h-full w-full flex-col p-6'>
+    <div className='flex h-full w-full flex-col bg-white px-8 py-10'>
       {/* Header */}
-      <div className='mb-6 flex items-center justify-between'>
-        <TextHeading className='text-text-main'>My Journeys</TextHeading>
+      <div className='mb-10 flex items-center justify-between'>
+        <TextHeading className='text-[36px] font-bold text-black'>My Journeys</TextHeading>
 
-        <button className='bg-primary-600 hover:bg-primary-700 flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-white transition-colors'>
-          <BadgePlus size={16} />
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className='flex items-center gap-2 rounded-full bg-[#008A90] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90'
+        >
+          <BadgePlus size={18} />
           New Journey
         </button>
       </div>
 
       {/* Grid */}
       <div className='flex flex-wrap gap-6'>
-        {journeys.map(journey => (
+        {initialJourneys.map(journey => (
           <JourneyCard key={journey.id} journey={journey} />
         ))}
       </div>
+
+      <NewJourneyModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSubmit={handleModalSubmit} 
+      />
     </div>
   );
 }

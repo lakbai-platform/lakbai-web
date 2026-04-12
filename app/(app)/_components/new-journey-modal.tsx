@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Calendar as CalendarIcon } from 'lucide-react';
 import { TextHeading, TextBody } from '@/components/text';
 
-export default function NewChatModal({ 
+export default function NewJourneyModal({ 
   open, 
   onClose,
   onSubmit

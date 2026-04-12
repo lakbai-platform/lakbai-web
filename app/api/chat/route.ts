@@ -37,61 +37,104 @@ Only output the raw JSON. Not wrapped in markdown blocks.
 `;
 
     // 1. Initial State (isNewContext === true)
-    if (isNewContext && newJourneyData) {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-      
-      // Create Database entities directly using explicit modal data constraints
-      journey = await prisma.journey.create({
-        data: {
-          title: `Trip to ${newJourneyData.destination}`,
-          destination: newJourneyData.destination,
-          companions: newJourneyData.companions,
-          preferences: newJourneyData.preferences,
-          budget: 0,
-          startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
-          endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
-          isFlexibleDates: newJourneyData.dates?.isFlexible || false,
-        }
-      });
-      
-      chat = await prisma.chat.create({
-        data: {
-          journeyId: journey.id,
-          title: `Trip to ${newJourneyData.destination}`
-        }
-      });
-
-      const initPrompt = `
-      ${systemInstruction}
-      
-      The user just created a new journey with these explicit parameters:
-      Destination: ${newJourneyData.destination}
-      Companions: ${newJourneyData.companions}
-      Preferences: ${newJourneyData.preferences}
-      Dates Flexible: ${newJourneyData.dates?.isFlexible}
-      
-      Do not build the full itinerary yet. Return an empty itinerary for now, just establish the updatedTitle and updatedDestination. Fill aiText with an enthusiastic outgoing greeting acknowledging their constraints and asking what kinds of experiences they are initially looking for in ${newJourneyData.destination}!
-      `;
-      
-      const result = await model.generateContent(initPrompt);
-      const resText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
-      let aiData;
-      try {
-        aiData = JSON.parse(resText);
-      } catch (e) {
-        aiData = { aiText: "Let's plan your trip! What kind of places do you want to visit?", updatedTitle: journey.title };
+    if (isNewContext) {
+      if (body.isBlank) {
+        // Create an untitled blank chat WITH NO JOURNEY
+        chat = await prisma.chat.create({
+          data: { title: "Untitled Chat" }
+        });
+        const initGreeting = "Hi! I'm your AI Travel Assistant. Where would you like to explore today?";
+        await prisma.message.create({
+          data: { chatId: chat.id, role: 'ai', content: initGreeting }
+        });
+        
+        return NextResponse.json({ 
+           chat: { ...chat, messages: [{ role: 'ai', content: initGreeting }] }, 
+           journey: null,
+           aiText: initGreeting
+        });
       }
 
-      // Save initial greet message
-      const aiMsg = await prisma.message.create({
-        data: { chatId: chat.id, role: 'ai', content: aiData.aiText }
-      });
-      
-      return NextResponse.json({ 
-         chat: { ...chat, messages: [{ role: 'ai', content: aiData.aiText }] }, 
-         journey,
-         aiText: aiData.aiText
-      });
+      // Traditional parameters flow via explicit newJourneyData constraints
+      if (newJourneyData) {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+        
+        if (body.updateJourneyContext && body.chatId) {
+          // User is filling the modal inside an existing blank chat
+          journey = await prisma.journey.create({
+            data: {
+              title: `Trip to ${newJourneyData.destination}`,
+              destination: newJourneyData.destination,
+              companions: newJourneyData.companions,
+              preferences: newJourneyData.preferences,
+              budget: 0,
+              startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
+              endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
+              isFlexibleDates: newJourneyData.dates?.isFlexible || false,
+            }
+          });
+          
+          chat = await prisma.chat.update({
+            where: { id: body.chatId },
+            data: { 
+              journeyId: journey.id,
+              title: `Trip to ${newJourneyData.destination}` 
+            }
+          });
+        } else {
+          // Totally new context from scratch
+          journey = await prisma.journey.create({
+            data: {
+              title: `Trip to ${newJourneyData.destination}`,
+              destination: newJourneyData.destination,
+              companions: newJourneyData.companions,
+              preferences: newJourneyData.preferences,
+              budget: 0,
+              startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
+              endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
+              isFlexibleDates: newJourneyData.dates?.isFlexible || false,
+            }
+          });
+          
+          chat = await prisma.chat.create({
+            data: {
+              journeyId: journey.id,
+              title: `Trip to ${newJourneyData.destination}`
+            }
+          });
+        }
+
+        const initPrompt = `
+        ${systemInstruction}
+        
+        The user just created a new journey with these explicit parameters:
+        Destination: ${newJourneyData.destination}
+        Companions: ${newJourneyData.companions}
+        Preferences: ${newJourneyData.preferences}
+        Dates Flexible: ${newJourneyData.dates?.isFlexible}
+        
+        Do not build the full itinerary yet. Return an empty itinerary for now, just establish the updatedTitle and updatedDestination. Fill aiText with an enthusiastic outgoing greeting acknowledging their constraints and asking what kinds of experiences they are initially looking for in ${newJourneyData.destination}!
+        `;
+        
+        const result = await model.generateContent(initPrompt);
+        const resText = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        let aiData;
+        try {
+          aiData = JSON.parse(resText);
+        } catch (e) {
+          aiData = { aiText: "Let's plan your trip! What kind of places do you want to visit?", updatedTitle: journey.title };
+        }
+
+        const aiMsg = await prisma.message.create({
+          data: { chatId: chat.id, role: 'ai', content: aiData.aiText }
+        });
+        
+        return NextResponse.json({ 
+           chat: { ...chat, messages: [{ role: 'ai', content: aiData.aiText }] }, 
+           journey,
+           aiText: aiData.aiText
+        });
+      }
     }
 
     // 2. Continuing an existing chat
@@ -238,15 +281,17 @@ export async function GET(request: Request) {
 
     if (!chat) return NextResponse.json({ error: "Chat not found" }, { status: 404 });
 
-    const journey = await prisma.journey.findUnique({
-      where: { id: chat.journeyId },
-      include: {
-        itineraryItems: {
-          include: { poi: true },
-          orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
-        }
-      }
-    });
+    const journey = chat.journeyId
+      ? await prisma.journey.findUnique({
+          where: { id: chat.journeyId },
+          include: {
+            itineraryItems: {
+              include: { poi: true },
+              orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
+            }
+          }
+        })
+      : null;
 
     return NextResponse.json({ chat, journey });
   } catch (error) {
