@@ -1,15 +1,18 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-type NotificationType = 'delete-confirmation';
+type NotificationType = 'delete-confirmation' | 'rename-confirmation';
+type ToastType = 'success' | 'error';
 
 interface NotificationProps {
   type: NotificationType;
   isOpen: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (value?: string) => void | Promise<void>;
   isLoading?: boolean;
+  initialValue?: string;
 }
 
 interface NotificationConfig {
@@ -18,6 +21,7 @@ interface NotificationConfig {
   cancelLabel: string;
   confirmLabel: string;
   confirmLoadingLabel: string;
+  inputPlaceholder?: string;
 }
 
 const notificationConfigs: Record<NotificationType, NotificationConfig> = {
@@ -27,6 +31,14 @@ const notificationConfigs: Record<NotificationType, NotificationConfig> = {
     cancelLabel: 'Cancel',
     confirmLabel: 'Delete',
     confirmLoadingLabel: 'Deleting...'
+  },
+  'rename-confirmation': {
+    title: 'Rename chat',
+    description: 'Enter the new name for your chat',
+    cancelLabel: 'Cancel',
+    confirmLabel: 'Rename',
+    confirmLoadingLabel: 'Renaming...',
+    inputPlaceholder: 'Chat name'
   }
 };
 
@@ -35,11 +47,29 @@ export default function Notification({
   isOpen,
   onCancel,
   onConfirm,
-  isLoading = false
+  isLoading = false,
+  initialValue = ''
 }: NotificationProps) {
+  const [inputValue, setInputValue] = useState(initialValue);
+
+  useEffect(() => {
+    if (isOpen) {
+      setInputValue(initialValue);
+    }
+  }, [isOpen, initialValue]);
+
   if (!isOpen) return null;
 
   const config = notificationConfigs[type];
+  const isRenameType = type === 'rename-confirmation';
+
+  const handleConfirm = async () => {
+    if (isRenameType) {
+      await onConfirm(inputValue);
+    } else {
+      await onConfirm();
+    }
+  };
 
   return (
     <>
@@ -66,6 +96,21 @@ export default function Notification({
           </button>
         </div>
 
+        {/* Input field if needed */}
+        {isRenameType && (
+          <div className='border-border border-b px-6 py-4'>
+            <input
+              type='text'
+              value={inputValue}
+              onChange={e => setInputValue(e.target.value)}
+              placeholder={config.inputPlaceholder}
+              className='bg-surface border-border placeholder:text-text-muted text-text-main focus:border-primary-500 w-full rounded-lg border px-4 py-2 text-sm outline-none'
+              disabled={isLoading}
+              autoFocus
+            />
+          </div>
+        )}
+
         {/* Footer with buttons */}
         <div className='flex gap-3 px-6 py-4'>
           <button
@@ -76,15 +121,48 @@ export default function Notification({
             {config.cancelLabel}
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className='bg-primary-500 hover:bg-primary-600 flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50'
-            disabled={isLoading}
+            disabled={isLoading || (isRenameType && !inputValue.trim())}
           >
             {isLoading ? config.confirmLoadingLabel : config.confirmLabel}
           </button>
         </div>
       </div>
     </>
+  );
+}
+
+// Toast notification component
+interface ToastProps {
+  isOpen: boolean;
+  message: string;
+  type?: ToastType;
+  onClose?: () => void;
+  duration?: number;
+}
+
+export function Toast({
+  isOpen,
+  message,
+  type = 'success',
+  onClose,
+  duration = 3000
+}: ToastProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className='animate-in fade-in slide-in-from-top-4 fixed top-8 left-1/2 z-50 -translate-x-1/2 duration-300'>
+      <div
+        className={`rounded-lg px-6 py-3 text-sm font-medium shadow-lg ${
+          type === 'success'
+            ? 'border border-green-200 bg-green-50 text-green-900'
+            : 'border border-red-200 bg-red-50 text-red-900'
+        }`}
+      >
+        {message}
+      </div>
+    </div>
   );
 }
 

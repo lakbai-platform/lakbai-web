@@ -340,3 +340,40 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+    const id = searchParams.get('id');
+    const body = await request.json();
+    const { title } = body;
+
+    if (!type || !id) {
+      return NextResponse.json({ error: "Missing type or id" }, { status: 400 });
+    }
+
+    if (!title || !title.trim()) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    if (type === 'chat') {
+      await prisma.chat.update({
+        where: { id },
+        data: { title: title.trim() }
+      });
+    } else if (type === 'journey') {
+      await prisma.journey.update({
+        where: { id },
+        data: { title: title.trim() }
+      });
+    } else {
+      return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PATCH Error:", error);
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+}
