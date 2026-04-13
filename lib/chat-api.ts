@@ -22,7 +22,14 @@ export async function createJourneyChat(newJourneyData: {
   destination: string;
   companions?: string;
   preferences?: string;
-  dates?: { from?: string; to?: string; isFlexible?: boolean };
+  dates?: {
+    from?: string;
+    to?: string;
+    isFlexible?: boolean;
+    days?: number;
+    month?: string;
+    months?: string[];
+  };
 }): Promise<{ chat: any; journey: any } | null> {
   try {
     const res = await fetch('/api/chat', {
@@ -42,7 +49,14 @@ export async function linkJourneyToChat(chatId: string, newJourneyData: {
   destination: string;
   companions?: string;
   preferences?: string;
-  dates?: { from?: string; to?: string; isFlexible?: boolean };
+  dates?: {
+    from?: string;
+    to?: string;
+    isFlexible?: boolean;
+    days?: number;
+    month?: string;
+    months?: string[];
+  };
 }): Promise<{ chat: any; journey: any } | null> {
   try {
     const res = await fetch('/api/chat', {

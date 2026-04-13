@@ -68,8 +68,16 @@ Only output the raw JSON. Not wrapped in markdown blocks.
               companions: newJourneyData.companions,
               preferences: newJourneyData.preferences,
               budget: 0,
-              startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
-              endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
+              startDate: newJourneyData.dates?.isFlexible
+                ? null
+                : newJourneyData.dates?.from
+                  ? new Date(newJourneyData.dates.from)
+                  : null,
+              endDate: newJourneyData.dates?.isFlexible
+                ? null
+                : newJourneyData.dates?.to
+                  ? new Date(newJourneyData.dates.to)
+                  : null,
               isFlexibleDates: newJourneyData.dates?.isFlexible || false,
             }
           });
@@ -90,8 +98,16 @@ Only output the raw JSON. Not wrapped in markdown blocks.
               companions: newJourneyData.companions,
               preferences: newJourneyData.preferences,
               budget: 0,
-              startDate: newJourneyData.dates?.from ? new Date(newJourneyData.dates.from) : null,
-              endDate: newJourneyData.dates?.to ? new Date(newJourneyData.dates.to) : null,
+              startDate: newJourneyData.dates?.isFlexible
+                ? null
+                : newJourneyData.dates?.from
+                  ? new Date(newJourneyData.dates.from)
+                  : null,
+              endDate: newJourneyData.dates?.isFlexible
+                ? null
+                : newJourneyData.dates?.to
+                  ? new Date(newJourneyData.dates.to)
+                  : null,
               isFlexibleDates: newJourneyData.dates?.isFlexible || false,
             }
           });
