@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -20,12 +20,61 @@ import {
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [collapsedMenuTop, setCollapsedMenuTop] = useState<number | null>(null);
+  const iconTooltipClass =
+    'pointer-events-none absolute top-1/2 left-full z-40 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-primary-dark-700 bg-primary-dark-900 px-2.5 py-1.5 text-xs font-medium text-primary-dark-50 opacity-0 shadow-sm transition-opacity';
   const pathname = usePathname();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const profileMenuContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen || !isCollapsed) {
+      setCollapsedMenuTop(null);
+      return;
+    }
+
+    const updateCollapsedMenuPosition = () => {
+      const triggerEl = profileTriggerRef.current;
+      const menuEl = profileMenuContentRef.current;
+      if (!triggerEl || !menuEl) return;
+
+      const triggerRect = triggerEl.getBoundingClientRect();
+      const menuRect = menuEl.getBoundingClientRect();
+      const spacing = 8;
+      const safeTop = 8;
+
+      setCollapsedMenuTop(
+        Math.max(safeTop, triggerRect.top - menuRect.height - spacing)
+      );
+    };
+
+    updateCollapsedMenuPosition();
+    window.addEventListener('resize', updateCollapsedMenuPosition);
+
+    return () =>
+      window.removeEventListener('resize', updateCollapsedMenuPosition);
+  }, [isCollapsed, isProfileMenuOpen]);
 
   return (
     <aside
       className={cn(
-        'group border-text-muted bg-surface relative flex h-full flex-col border-r transition-all duration-300 ease-in-out',
+        'group border-text-muted bg-surface relative flex h-full flex-col border transition-all duration-300 ease-in-out',
         isCollapsed ? 'w-22' : 'w-55'
       )}
     >
@@ -87,6 +136,15 @@ export function Sidebar() {
             lakbai
           </TextSubheading>
         </div>
+
+        <span
+          className={cn(
+            iconTooltipClass,
+            isCollapsed ? 'group-hover/logo:opacity-100' : 'hidden'
+          )}
+        >
+          Expand
+        </span>
       </div>
 
       {/* Nav */}
@@ -98,13 +156,13 @@ export function Sidebar() {
       >
         {/* Chat - Global Overlay Toggle */}
         <button
-          onClick={(e) => {
+          onClick={e => {
             e.preventDefault();
             setIsCollapsed(true); // Close the global sidebar on click to focus the popup
             window.dispatchEvent(new CustomEvent('toggle-chat-popup'));
           }}
           className={cn(
-            'group/link flex items-center transition-colors text-text-muted hover:text-text-main hover:bg-slate-100',
+            'group/link text-text-muted hover:text-text-main relative flex items-center transition-colors hover:bg-slate-100',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg px-3 py-3'
@@ -119,13 +177,21 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Chat</span>
           </div>
+          <span
+            className={cn(
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/link:opacity-100' : 'hidden'
+            )}
+          >
+            Chat
+          </span>
         </button>
 
         {/* Journey */}
         <Link
           href='/journey'
           className={cn(
-            'group/link flex items-center transition-colors',
+            'group/link relative flex items-center transition-colors',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg px-3 py-3',
@@ -145,13 +211,21 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Journey</span>
           </div>
+          <span
+            className={cn(
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/link:opacity-100' : 'hidden'
+            )}
+          >
+            Journey
+          </span>
         </Link>
 
         {/* Explore */}
         <Link
           href='/explore'
           className={cn(
-            'group/link flex items-center transition-colors',
+            'group/link relative flex items-center transition-colors',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg px-3 py-3',
@@ -171,13 +245,21 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Explore</span>
           </div>
+          <span
+            className={cn(
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/link:opacity-100' : 'hidden'
+            )}
+          >
+            Explore
+          </span>
         </Link>
 
         {/* Navigate */}
         <Link
           href='/navigate'
           className={cn(
-            'group/link flex items-center transition-colors',
+            'group/link relative flex items-center transition-colors',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg px-3 py-3',
@@ -197,13 +279,21 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Navigate</span>
           </div>
+          <span
+            className={cn(
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/link:opacity-100' : 'hidden'
+            )}
+          >
+            Navigate
+          </span>
         </Link>
 
         {/* Contribute */}
         <Link
           href='/contribute'
           className={cn(
-            'group/link flex items-center transition-colors',
+            'group/link relative flex items-center transition-colors',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg px-3 py-3',
@@ -223,6 +313,14 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Contribute</span>
           </div>
+          <span
+            className={cn(
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/link:opacity-100' : 'hidden'
+            )}
+          >
+            Contribute
+          </span>
         </Link>
       </nav>
 
@@ -236,7 +334,7 @@ export function Sidebar() {
         {/* Notifications */}
         <button
           className={cn(
-            'text-text-muted flex items-center transition-colors hover:bg-slate-100',
+            'group/notify text-text-muted relative flex items-center transition-colors hover:bg-slate-100',
             isCollapsed
               ? 'h-12 w-12 justify-center rounded-xl'
               : 'w-full rounded-lg p-2'
@@ -251,31 +349,110 @@ export function Sidebar() {
           >
             <span className='font-medium whitespace-nowrap'>Notifications</span>
           </div>
-        </button>
-        {/* Profile */}
-        <button
-          className={cn(
-            'text-text-muted flex items-center transition-colors hover:bg-slate-100',
-            isCollapsed
-              ? 'h-12 w-12 justify-center rounded-xl'
-              : 'w-full rounded-lg p-2'
-          )}
-        >
-          <UserCircle size={24} className='shrink-0' />
-          <div
+          <span
             className={cn(
-              'flex flex-col items-start overflow-hidden transition-all duration-300',
-              isCollapsed ? 'ml-0 w-0 opacity-0' : 'ml-3 w-auto opacity-100'
+              iconTooltipClass,
+              isCollapsed ? 'group-hover/notify:opacity-100' : 'hidden'
             )}
           >
-            <span className='text-text-main text-sm font-medium whitespace-nowrap'>
-              profile name
-            </span>
-            <span className='text-text-muted text-xs whitespace-nowrap'>
-              @profileexample
-            </span>
-          </div>
+            Notifications
+          </span>
         </button>
+        {/* Profile */}
+        <div ref={profileMenuRef} className='relative'>
+          {isProfileMenuOpen && (
+            <div
+              ref={profileMenuContentRef}
+              className={cn(
+                'border-border bg-surface z-50 overflow-hidden rounded-lg border shadow-lg',
+                isCollapsed
+                  ? 'fixed left-4 w-64'
+                  : 'absolute bottom-full left-0 mb-2 w-62.5'
+              )}
+              style={
+                isCollapsed && collapsedMenuTop !== null
+                  ? { top: collapsedMenuTop }
+                  : undefined
+              }
+            >
+              <div className='divide-border divide-y'>
+                <Link
+                  href='/profile'
+                  onClick={() => setIsProfileMenuOpen(false)}
+                  className='hover:bg-surface-light flex items-center justify-between px-4 py-3 transition-colors'
+                >
+                  <div className='flex flex-col items-start'>
+                    <span className='text-text-main text-sm font-semibold'>
+                      profile name
+                    </span>
+                    <span className='text-text-muted text-xs'>
+                      View profile
+                    </span>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className='text-text-muted shrink-0'
+                  />
+                </Link>
+
+                <button
+                  type='button'
+                  className='hover:bg-surface-light text-text-main w-full px-4 py-3 text-left text-sm font-medium transition-colors'
+                >
+                  Account Settings
+                </button>
+
+                <div className='px-4 py-2'>
+                  <button
+                    type='button'
+                    className='hover:bg-surface-light text-text-main block w-full rounded-md px-2 py-2 text-left text-sm transition-colors'
+                  >
+                    Give Feedback
+                  </button>
+                  <button
+                    type='button'
+                    className='hover:bg-surface-light text-text-main block w-full rounded-md px-2 py-2 text-left text-sm transition-colors'
+                  >
+                    Privacy Policy
+                  </button>
+                  <button
+                    type='button'
+                    className='hover:bg-surface-light text-text-main block w-full rounded-md px-2 py-2 text-left text-sm transition-colors'
+                  >
+                    Terms of Service
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            ref={profileTriggerRef}
+            type='button'
+            onClick={() => setIsProfileMenuOpen(prev => !prev)}
+            className={cn(
+              'group/profile text-text-muted relative flex items-center transition-colors hover:bg-slate-100',
+              isCollapsed
+                ? 'h-12 w-12 justify-center rounded-xl'
+                : 'w-full rounded-lg p-2'
+            )}
+          >
+            <UserCircle size={24} className='shrink-0' />
+            <div
+              className={cn(
+                'flex flex-col items-start overflow-hidden transition-all duration-300',
+                isCollapsed ? 'ml-0 w-0 opacity-0' : 'ml-3 w-auto opacity-100'
+              )}
+            >
+              <span className='text-text-main text-sm font-medium whitespace-nowrap'>
+                profile name
+              </span>
+              <span className='text-text-muted text-xs whitespace-nowrap'>
+                @profileexample
+              </span>
+            </div>
+          </button>
+        </div>
       </div>
     </aside>
   );
