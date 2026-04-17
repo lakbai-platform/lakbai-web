@@ -56,7 +56,7 @@ export default function LandingPage() {
           <div className='flex items-center gap-2 md:gap-4'>
             <button
               onClick={() => setIsLoginOpen(true)}
-              className='hover:text-primary-500 px-3 py-2 text-sm font-semibold text-slate-600 transition-colors md:px-4'
+              className='hover:text-primary-500 text-text main px-3 py-2 text-sm font-semibold transition-colors md:px-4'
             >
               Login
             </button>
