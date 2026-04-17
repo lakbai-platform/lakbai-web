@@ -48,7 +48,7 @@ export default function LandingPage() {
                 className='object-contain'
               />
             </div>
-            <TextSubheading className='text-primary-500 font-bold uppercase'>
+            <TextSubheading className='text-primary-500 font-bold'>
               lakbai
             </TextSubheading>
           </div>
