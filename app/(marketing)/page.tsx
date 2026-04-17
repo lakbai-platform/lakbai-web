@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Map as MapIcon, 
   MessageSquare, 
   ArrowRight,
-  Compass 
+  Compass
 } from 'lucide-react';
 import { 
   TextDisplay, 
@@ -15,10 +15,17 @@ import {
   TextSubheading, 
   TextBody 
 } from '@/components/text'; 
+import { Modal } from '@/components/modal';
 
 export default function LandingPage() {
+  // State for pop-up modals
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-white text-slate-900 selection:bg-blue-100 font-sans">
+      
+      {/* --- AESTHETIC BACKGROUND ELEMENTS --- */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-[10%] -left-[10%] h-[700px] w-[700px] rounded-full bg-blue-50/80 blur-[120px] animate-pulse" />
         <div className="absolute top-[20%] -right-[5%] h-[600px] w-[600px] rounded-full bg-indigo-50/50 blur-[100px]" />
@@ -39,23 +46,30 @@ export default function LandingPage() {
                 className="object-contain" 
               />
             </div>
-            <TextSubheading className="text-primary-500 font-bold">
+            <TextSubheading className="text-primary-500 font-bold uppercase">
               lakbai
             </TextSubheading>
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <Link href="/login" className="px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-blue-600 md:px-4">
+            <button 
+              onClick={() => setIsLoginOpen(true)}
+              className="px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-blue-600 md:px-4"
+            >
               Login
-            </Link>
-            <Link href="/signup" className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-lg active:scale-95 md:px-6">
+            </button>
+            <button 
+              onClick={() => setIsSignUpOpen(true)}
+              className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-lg active:scale-95 md:px-6"
+            >
               Sign Up
-            </Link>
+            </button>
           </div>
         </div>
       </nav>
 
       <main>
+  
         <section className="relative flex min-h-[75vh] flex-col justify-center px-6 pt-32 pb-16">
           <div className="mx-auto w-full max-w-7xl">
             <div className="max-w-5xl text-left">
@@ -72,9 +86,13 @@ export default function LandingPage() {
               </TextSubheading>
 
               <div className="flex items-center justify-start">
-                <Link href="/chat" className="group flex items-center gap-3 rounded-full bg-primary-500 px-10 py-5 text-xl font-bold text-white transition-all hover:opacity-90 hover:shadow-2xl active:scale-95">
+                {/* Changed to button to trigger Sign Up pop-up */}
+                <button 
+                  onClick={() => setIsSignUpOpen(true)}
+                  className="group flex items-center gap-3 rounded-full bg-primary-500 px-10 py-5 text-xl font-bold text-white transition-all hover:opacity-90 hover:shadow-2xl active:scale-95"
+                >
                   Get Started <ArrowRight size={24} className="transition-transform group-hover:translate-x-2" />
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -121,29 +139,95 @@ export default function LandingPage() {
 
       <footer className="w-full bg-white/50 pt-16 pb-12 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 md:px-4">
-      
           <div className="mb-10 h-px w-full bg-slate-200/60" />
-          
           <div className="flex flex-col items-start gap-6">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <div className="relative h-9 w-9">
                   <Image src="/logos/lakbai.svg" alt="Lakbai" fill className="object-contain" />
                 </div>
-                <TextSubheading className="text-primary-500 font-bold">lakbai</TextSubheading>
+                <TextSubheading className="text-primary-500 font-bold uppercase">lakbai</TextSubheading>
               </div>
-              
               <TextBody className="text-slate-500 font-medium">
                 © 2026 Lakbai App
               </TextBody>
-              
               <TextBody className="max-w-2xl text-slate-500/90 leading-relaxed">
-                Your AI partner for Perfect Journeys.
+                An open-source academic community-based project focused on building an intelligent itinerary generator built for Bicol University students and travelers to easily explore Legazpi City.
               </TextBody>
             </div>
           </div>
         </div>
       </footer>
+
+      <Modal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+        title="Welcome Back"
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <TextBody className="text-slate-600 font-semibold">Email Address</TextBody>
+            <input 
+              type="email" 
+              placeholder="name@example.com" 
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none transition-all focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/20" 
+            />
+          </div>
+          <button className="w-full rounded-2xl bg-primary-500 py-4 font-bold text-white shadow-lg shadow-primary-500/30 transition-all hover:opacity-90 active:scale-[0.98]">
+            Sign In
+          </button>
+          <div className="text-center">
+            <TextBody className="text-slate-500">
+              New to Lakbai? {' '}
+              <button 
+                onClick={() => { setIsLoginOpen(false); setIsSignUpOpen(true); }}
+                className="font-bold text-primary-500 hover:underline"
+              >
+                Create an account
+              </button>
+            </TextBody>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal 
+        isOpen={isSignUpOpen} 
+        onClose={() => setIsSignUpOpen(false)} 
+        title="Join Lakbai"
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <TextBody className="text-slate-600 font-semibold">Full Name</TextBody>
+            <input 
+              type="text" 
+              placeholder="Christian Morga" 
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none transition-all focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/20" 
+            />
+          </div>
+          <div className="space-y-2">
+            <TextBody className="text-slate-600 font-semibold">Email</TextBody>
+            <input 
+              type="email" 
+              placeholder="name@example.com" 
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none transition-all focus:border-primary-500 focus:bg-white focus:ring-2 focus:ring-primary-500/20" 
+            />
+          </div>
+          <button className="w-full rounded-2xl bg-primary-500 py-4 font-bold text-white shadow-lg shadow-primary-500/30 transition-all hover:opacity-90 active:scale-[0.98]">
+            Create Account
+          </button>
+          <div className="text-center">
+            <TextBody className="text-slate-500">
+              Already have an account? {' '}
+              <button 
+                onClick={() => { setIsSignUpOpen(false); setIsLoginOpen(true); }}
+                className="font-bold text-primary-500 hover:underline"
+              >
+                Sign in
+              </button>
+            </TextBody>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
