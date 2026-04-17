@@ -14,7 +14,7 @@ import {
   TextSubheading,
   TextBody
 } from '@/components/text';
-import { Modal } from '@/app/(marketing)/_components/modal';
+import { Modal } from '@/app/(marketing)/_components/UserAuthModal';
 
 export default function LandingPage() {
   // State for pop-up modals
