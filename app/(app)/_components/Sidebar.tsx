@@ -25,9 +25,21 @@ export function Sidebar() {
   const iconTooltipClass =
     'pointer-events-none absolute top-1/2 left-full z-40 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-primary-dark-700 bg-primary-dark-900 px-2.5 py-1.5 text-xs font-medium text-primary-dark-50 opacity-0 shadow-sm transition-opacity';
   const pathname = usePathname();
+  const previousPathnameRef = useRef(pathname);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
   const profileMenuContentRef = useRef<HTMLDivElement>(null);
+
+  const closeChatPopup = () => {
+    window.dispatchEvent(new CustomEvent('close-chat-popup'));
+  };
+
+  useEffect(() => {
+    if (previousPathnameRef.current !== pathname) {
+      closeChatPopup();
+      previousPathnameRef.current = pathname;
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -333,6 +345,8 @@ export function Sidebar() {
       >
         {/* Notifications */}
         <button
+          type='button'
+          onClick={closeChatPopup}
           className={cn(
             'group/notify text-text-muted relative flex items-center transition-colors hover:bg-slate-100',
             isCollapsed
@@ -429,7 +443,10 @@ export function Sidebar() {
           <button
             ref={profileTriggerRef}
             type='button'
-            onClick={() => setIsProfileMenuOpen(prev => !prev)}
+            onClick={() => {
+              closeChatPopup();
+              setIsProfileMenuOpen(prev => !prev);
+            }}
             className={cn(
               'group/profile text-text-muted relative flex items-center transition-colors hover:bg-slate-100',
               isCollapsed
