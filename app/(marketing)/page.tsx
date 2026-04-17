@@ -23,21 +23,7 @@ export default function LandingPage() {
 
   return (
     <div className='relative min-h-screen w-full overflow-hidden bg-white font-sans text-slate-900 selection:bg-blue-100'>
-      {/* --- AESTHETIC BACKGROUND ELEMENTS --- */}
-      <div className='absolute inset-0 -z-10 overflow-hidden'>
-        <div className='absolute -top-[10%] -left-[10%] h-[700px] w-[700px] animate-pulse rounded-full bg-blue-50/80 blur-[120px]' />
-        <div className='absolute top-[20%] -right-[5%] h-[600px] w-[600px] rounded-full bg-indigo-50/50 blur-[100px]' />
-
-        <div
-          className='absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] opacity-[0.03]'
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-          }}
-        />
-      </div>
-
-      <nav className='fixed top-0 z-50 w-full border-b border-slate-100 bg-white/40 backdrop-blur-md'>
+      <nav className='bg-surface border-border fixed top-0 z-50 w-full border-b'>
         <div className='mx-auto flex max-w-7xl items-center justify-between px-6 py-4'>
           <div className='flex items-center gap-2'>
             <div className='relative h-9 w-9'>
