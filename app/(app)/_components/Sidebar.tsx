@@ -112,13 +112,18 @@ export function Sidebar() {
               e.stopPropagation();
               setIsCollapsed(!isCollapsed);
             }}
-            className='border-text-muted bg-surface text-text-muted flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border hover:bg-slate-100 focus:outline-none'
+            className='group/toggle border-text-muted bg-surface text-text-muted relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border hover:bg-slate-100 focus:outline-none'
           >
             {isCollapsed ? (
               <ChevronRight size={14} />
             ) : (
               <ChevronLeft size={14} />
             )}
+            <span
+              className={cn(iconTooltipClass, 'group-hover/toggle:opacity-100')}
+            >
+              {isCollapsed ? 'Expand' : 'Collapse'}
+            </span>
           </button>
         </div>
 
@@ -148,15 +153,6 @@ export function Sidebar() {
             lakbai
           </TextSubheading>
         </div>
-
-        <span
-          className={cn(
-            iconTooltipClass,
-            isCollapsed ? 'group-hover/logo:opacity-100' : 'hidden'
-          )}
-        >
-          Expand
-        </span>
       </div>
 
       {/* Nav */}

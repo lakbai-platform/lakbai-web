@@ -2,13 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { cn } from '@/lib/cn';
 import Chatbox from './_components/chatbox';
 import MapArea from './_components/map-area';
 
-export default function ChatClientLayout({ initialChats, initialJourneys }: { initialChats: any[], initialJourneys: any[] }) {
+export default function ChatClientLayout({
+  initialChats,
+  initialJourneys
+}: {
+  initialChats: any[];
+  initialJourneys: any[];
+}) {
   const params = useParams();
   const chatId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   // Automatically manage redirect if on /chat randomly
   useEffect(() => {
@@ -30,7 +38,9 @@ export default function ChatClientLayout({ initialChats, initialJourneys }: { in
               router.refresh();
               router.replace(`/chat/${data.chat.id}`);
             }
-          } catch(e) { console.error(e); }
+          } catch (e) {
+            console.error(e);
+          }
         };
         createBlankChat();
       }
@@ -48,15 +58,23 @@ export default function ChatClientLayout({ initialChats, initialJourneys }: { in
   return (
     <div className='flex h-full w-full overflow-hidden'>
       {/* LEFT: Chatbox (Full fixed width or percentage) */}
-      <div className='h-full w-1/2 border-r bg-white transition-all'>
-        <Chatbox 
-          onOpenNewJourneyModal={triggerNewJourneyModal}
-        />
+      <div
+        className={cn(
+          'h-full bg-white transition-all duration-300 ease-in-out',
+          isMapExpanded
+            ? 'pointer-events-none w-0 overflow-hidden border-r-0 opacity-0'
+            : 'w-1/2 border-r opacity-100'
+        )}
+      >
+        <Chatbox onOpenNewJourneyModal={triggerNewJourneyModal} />
       </div>
 
       {/* RIGHT: MapArea */}
-      <div className='flex-1 bg-gray-100 h-full'>
-        <MapArea />
+      <div className='h-full flex-1 bg-gray-100'>
+        <MapArea
+          isExpanded={isMapExpanded}
+          onToggleExpand={() => setIsMapExpanded(prev => !prev)}
+        />
       </div>
     </div>
   );
