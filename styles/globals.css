@@ -369,3 +369,14 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .scrollbar-invisible {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-invisible::-webkit-scrollbar {
+    display: none;
+  }
+}
