@@ -1,5 +1,9 @@
+import ContributeMapArea from './_components/map-area';
+
 export default function ContributePage() {
   return (
-    <div className='flex h-full items-center justify-center'>Contribute Page</div>
+    <div className='bg-surface-light h-full w-full overflow-hidden'>
+      <ContributeMapArea />
+    </div>
   );
 }
