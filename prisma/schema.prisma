@@ -38,19 +38,36 @@ model POI {
   
   // Relations
   tags             POITag[]       // <--- Many-to-many relation for tags/themes
+  address          POIAddress?
   galleries        POIGallery[]
   reviews          POIReview[]
   vouches          POIVouch[]
   favorites        POIFavorite[]
   itineraryItems   ItineraryItem[]
-  
-  city             String?
-  province         String?
-  state            String?
-  country          String?
 
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+}
+
+model POIAddress {
+  id                 String    @id @default(cuid())
+  poiId              String    @unique
+  poi                POI       @relation(fields: [poiId], references: [id], onDelete: Cascade)
+
+  // Single flexible address form for subdivision and rural/informal entries.
+  // All fields are optional so admins can still review and complete partial submissions.
+  blockLotNumber     String?
+  houseNumber        String?
+  purok              String?
+  street             String?
+  subdivisionName    String?
+  barangay           String?
+  cityMunicipality   String?
+  province           String?
+  postalCode         String?
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model POITag {
