@@ -6,7 +6,7 @@ import {
   Map as MapIcon,
   MessageSquare,
   ArrowRight,
-  Compass
+  Compass,
 } from 'lucide-react';
 import {
   TextDisplay,
@@ -15,6 +15,7 @@ import {
   TextBody
 } from '@/components/text';
 import { Modal } from '@/app/(marketing)/_components/UserAuthModal';
+import { GithubLogo } from '@/components/icons/GithubLogo';
 
 export default function LandingPage() {
   // State for pop-up modals
@@ -61,29 +62,23 @@ export default function LandingPage() {
           <div className='mx-auto w-full max-w-7xl'>
             <div className='max-w-5xl text-left'>
               <TextDisplay className='mb-6 tracking-tighter text-slate-900 md:mb-8 md:text-[100px] md:leading-[0.95]'>
-                Your AI partner for <br />
-                <span className='from-primary-500 to-primary-600 bg-gradient-to-r via-blue-400 bg-clip-text text-transparent italic'>
-                  Perfect journeys.
+                Plan your <br />
+                <span className='text-primary-500'>
+                  perfect journey
                 </span>
               </TextDisplay>
 
-              <TextSubheading className='mb-12 max-w-2xl leading-relaxed text-slate-500/90 md:text-[28px]'>
-                Lakbai transforms how you explore Legazpi. Build itineraries,
-                discover local spots, and navigate with ease—all powered by
-                intelligent AI.
+              <TextSubheading className='mb-12 max-w-2xl leading-relaxed text-text-muted md:text-[28px]'>
+                Smart itineraries for the modern <span className='text-primary-500 font-semibold'>local</span> explorer
               </TextSubheading>
 
               <div className='flex items-center justify-start'>
                 {/* Changed to button to trigger Sign Up pop-up */}
                 <button
                   onClick={() => setIsSignUpOpen(true)}
-                  className='group bg-primary-500 flex items-center gap-3 rounded-full px-10 py-5 text-xl font-bold text-white transition-all hover:opacity-90 hover:shadow-2xl active:scale-95'
+                  className='group bg-primary-500 text-background flex items-center gap-3 rounded-full px-10 py-5 text-lg font-semibold hover:cursor-pointer hover:opacity-90'
                 >
-                  Get Started{' '}
-                  <ArrowRight
-                    size={24}
-                    className='transition-transform group-hover:translate-x-2'
-                  />
+                  Start your journey
                 </button>
               </div>
             </div>
@@ -139,9 +134,10 @@ export default function LandingPage() {
       <footer className='w-full bg-white/50 pt-16 pb-12 backdrop-blur-md'>
         <div className='mx-auto max-w-7xl px-6 md:px-4'>
           <div className='mb-10 h-px w-full bg-slate-200/60' />
-          <div className='flex flex-col items-start gap-6'>
-            <div className='flex flex-col gap-4'>
-              <div className='flex items-center gap-2'>
+          <div className='flex flex-col gap-10'>
+            {/* Top Layer */}
+            <div className='flex flex-col md:flex-row justify-between items-start gap-8'>
+              <div className='flex flex-col gap-4 max-w-2xl'>
                 <div className='relative h-9 w-9'>
                   <Image
                     src='/logos/lakbai.svg'
@@ -150,19 +146,31 @@ export default function LandingPage() {
                     className='object-contain'
                   />
                 </div>
-                <TextSubheading className='text-primary-500 font-bold'>
-                  lakbai
-                </TextSubheading>
               </div>
-              <TextBody className='font-medium text-slate-500'>
-                © 2026 Lakbai App
-              </TextBody>
-              <TextBody className='max-w-2xl leading-relaxed text-slate-500/90'>
-                An open-source academic community-based project focused on
-                building an intelligent itinerary generator built for Bicol
-                University students and travelers to easily explore Legazpi
-                City.
-              </TextBody>
+              <div className='flex flex-col gap-3 md:text-right'>
+                <a href='#' className='font-medium text-text-muted hover:text-slate-900 transition-colors'>About</a>
+                <a href='#' className='font-medium text-text-muted   hover:text-slate-900 transition-colors'>Team</a>
+                <a href='#' className='font-medium text-text-muted hover:text-slate-900 transition-colors'>Contact</a>
+              </div>
+            </div>
+
+            {/* Bottom Layer */}
+            <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-8 border-t border-slate-200/60'>
+              <div className='flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8'>
+                <TextBody className='font-medium text-text-muted'>
+                  © 2026 Lakbai
+                </TextBody>
+                <div className='flex items-center gap-4 md:gap-6'>
+                  <a href='#' className='text-sm font-medium text-text-muted hover:text-text-main transition-colors'>Privacy Policy</a>
+                  <a href='#' className='text-sm font-medium text-text-muted hover:text-text-main transition-colors'>Terms of Service</a>
+                </div>
+              </div>
+              <div className='flex items-center gap-4'>
+                <a href='https://github.com/lakbai-platform/lakbai-web' target='_blank' rel='noreferrer' className='text-text-muted hover:text-text-main transition-colors'>
+                  <span className="sr-only">GitHub</span>
+                  <GithubLogo size={24} className='hover:text-primary-400' />
+                </a>
+              </div>
             </div>
           </div>
         </div>
