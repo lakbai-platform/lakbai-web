@@ -70,10 +70,25 @@ model POIAddress {
   updatedAt          DateTime  @updatedAt
 }
 
+model POITagCluster {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g. 'Eats', 'Attractions'
+  iconName    String   // e.g. 'Utensils', 'Landmark'
+
+  tags        POITag[]
+
+  createdAt   DateTime @default(now())
+}
+
 model POITag {
-  id        String   @id @default(cuid())
-  name      String   @unique // e.g., "Park", "Restaurant", "Hotel"
-  pois      POI[]    // <--- Many-to-many relation back to POI
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "Park", "Restaurant", "Hotel"
+  iconName    String?  // user suggested icon, e.g., 'Coffee'
+  
+  clusterId   String?
+  cluster     POITagCluster? @relation(fields: [clusterId], references: [id])
+  
+  pois        POI[]    // <--- Many-to-many relation back to POI
 }
 
 model POIGallery {
@@ -81,7 +96,6 @@ model POIGallery {
   poiId     String
   poi       POI      @relation(fields: [poiId], references: [id], onDelete: Cascade)
   imageUrl  String   
-  caption   String?
 
   createdAt DateTime @default(now())
 }

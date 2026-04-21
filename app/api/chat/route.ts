@@ -179,8 +179,8 @@ Only output the raw JSON. Not wrapped in markdown blocks.
     let pois = await prisma.pOI.findMany({
       where: journey.destination ? {
         OR: [
-          { city: { contains: journey.destination, mode: 'insensitive' } },
-          { province: { contains: journey.destination, mode: 'insensitive' } },
+          { address: { cityMunicipality: { contains: journey.destination, mode: 'insensitive' } } },
+          { address: { province: { contains: journey.destination, mode: 'insensitive' } } },
           { name: { contains: journey.destination, mode: 'insensitive' } }
         ]
       } : {},

@@ -1,6 +1,14 @@
+export type POITagCluster = {
+  id: string;
+  name: string;
+  iconName: string;
+};
+
 export type POITag = {
   id: string;
   name: string;
+  iconName?: string | null;
+  cluster?: POITagCluster | null;
 };
 
 export type POIGallery = {

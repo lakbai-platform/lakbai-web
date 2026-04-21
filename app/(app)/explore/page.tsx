@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import ExploreArea from './_components/explore-area';
-import MapArea from '../chat/_components/map-area';
+import MapArea from '@/components/map-area';
 
 export default function ExplorePage() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);

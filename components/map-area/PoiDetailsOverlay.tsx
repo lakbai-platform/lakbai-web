@@ -17,6 +17,8 @@ import {
 import PoiMapCanvas from '@/components/map-area/PoiMapCanvas';
 import type { POI } from '@/components/map-area/types';
 import PoiFullscreenGallery from './PoiFullscreenGallery';
+import { getTagIcon } from './get-tag-icon';
+import { TextHeading, TextBody } from '@/components/text';
 
 type DetailTab = 'description' | 'reviews' | 'location';
 
@@ -165,10 +167,28 @@ export default function PoiDetailsOverlay({
         </div>
 
         <div className='mt-4'>
-          <h2 className='text-foreground text-4xl leading-tight font-extrabold'>
+          <TextHeading className='text-4xl leading-tight font-extrabold'>
             {poi.name || 'Location Title'}
-          </h2>
-          <div className='mt-2 flex flex-wrap items-center gap-2 text-sm'>
+          </TextHeading>
+
+          {poi.tags && poi.tags.length > 0 && (
+            <div className='mt-3 flex flex-wrap gap-2'>
+              {poi.tags.map(tag => {
+                const { icon: TagIcon, color } = getTagIcon([tag]);
+                return (
+                  <span
+                    key={tag.id}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white ${color}`}
+                  >
+                    <TagIcon className='h-3.5 w-3.5' />
+                    {tag.cluster ? `${tag.cluster.name} • ${tag.name}` : tag.name}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
             <span className='border-foreground/40 inline-flex items-center gap-1 rounded-full border px-2.5 py-1'>
               <Star className='h-3.5 w-3.5 fill-current' /> 4.6 •{' '}
               {poi.vouchCount} reviews
@@ -295,58 +315,58 @@ export default function PoiDetailsOverlay({
 
         {activeTab === 'description' && (
           <div className='mt-4 space-y-5'>
-            <p className='text-foreground/90 leading-relaxed'>
+            <TextBody className='text-foreground/90 leading-relaxed'>
               {poi.description ||
                 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.'}
-            </p>
+            </TextBody>
 
             <div className='grid gap-4 border-y py-5 md:grid-cols-3'>
               <div>
-                <p className='text-foreground flex items-center gap-2 font-semibold'>
+                <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
                   <MapPin className='h-4 w-4' /> Address
-                </p>
-                <p className='text-foreground/80 mt-1 text-sm whitespace-pre-line'>
+                </TextBody>
+                <TextBody className='text-foreground/80 mt-1 whitespace-pre-line'>
                   {`${poi.address?.street || 'P5 Rawis'}\n${poi.address?.cityMunicipality || 'Legazpi City'}\n${poi.address?.province || 'Albay'}\nPhilippines`}
-                </p>
+                </TextBody>
               </div>
 
               <div className='space-y-2'>
                 <div>
-                  <p className='text-foreground flex items-center gap-2 font-semibold'>
+                  <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
                     <ExternalLink className='h-4 w-4' /> Website
-                  </p>
-                  <p className='text-foreground/80 mt-1 text-sm'>
+                  </TextBody>
+                  <TextBody className='text-foreground/80 mt-1'>
                     www.example.com
-                  </p>
+                  </TextBody>
                 </div>
                 <div>
-                  <p className='text-foreground flex items-center gap-2 font-semibold'>
+                  <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
                     <Phone className='h-4 w-4' /> Phone
-                  </p>
-                  <p className='text-foreground/80 mt-1 text-sm'>
+                  </TextBody>
+                  <TextBody className='text-foreground/80 mt-1'>
                     +69 999 999 9999
-                  </p>
+                  </TextBody>
                 </div>
               </div>
 
               <div>
-                <p className='text-foreground font-semibold'>Operating Hours</p>
-                <p className='mt-1 text-sm font-semibold text-emerald-600'>
+                <TextBody className='text-foreground font-semibold'>Operating Hours</TextBody>
+                <TextBody className='mt-1 font-semibold text-emerald-600'>
                   Open Now
-                </p>
-                <p className='text-foreground/80 mt-1 text-sm'>
+                </TextBody>
+                <TextBody className='text-foreground/80 mt-1'>
                   Daily 6 AM - 6 PM
-                </p>
+                </TextBody>
               </div>
             </div>
 
             <div className='space-y-2'>
-              <p className='text-foreground flex items-center gap-2 font-semibold'>
+              <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
                 <MapPinned className='h-4 w-4' /> Location
-              </p>
-              <p className='text-foreground/80 text-sm'>
+              </TextBody>
+              <TextBody className='text-foreground/80'>
                 {`Lat ${poi.latitude.toFixed(5)}, Lng ${poi.longitude.toFixed(5)}`}
-              </p>
+              </TextBody>
               <div className='h-64 overflow-hidden rounded-xl'>
                 <PoiMapCanvas
                   pois={[poi]}
@@ -413,12 +433,12 @@ export default function PoiDetailsOverlay({
 
         {activeTab === 'location' && (
           <div className='mt-4 space-y-2'>
-            <p className='text-foreground flex items-center gap-2 font-semibold'>
+            <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
               <MapPinned className='h-4 w-4' /> Location
-            </p>
-            <p className='text-foreground/80 text-sm'>
+            </TextBody>
+            <TextBody className='text-foreground/80'>
               {`Lat ${poi.latitude.toFixed(5)}, Lng ${poi.longitude.toFixed(5)}`}
-            </p>
+            </TextBody>
             <div className='h-72 overflow-hidden rounded-xl'>
               <PoiMapCanvas
                 pois={[poi]}
@@ -433,9 +453,10 @@ export default function PoiDetailsOverlay({
 
       <PoiFullscreenGallery
         isOpen={isGalleryOpen}
-        title={`${poi.name} Gallery`}
+        title={`${poi.name}`}
         images={galleryImages}
         onClose={() => setIsGalleryOpen(false)}
+        onShare={onCopyShareUrl}
       />
     </div>
   );

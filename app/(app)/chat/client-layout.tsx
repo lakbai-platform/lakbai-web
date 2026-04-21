@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import Chatbox from './_components/chatbox';
-import MapArea from './_components/map-area';
+import MapArea from '@/components/map-area';
 
 export default function ChatClientLayout({
   initialChats,

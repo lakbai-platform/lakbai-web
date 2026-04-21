@@ -1,15 +1,5 @@
-import {
-  MapPin,
-  Utensils,
-  Coffee,
-  Mountain,
-  Bike,
-  Landmark,
-  Bed,
-  Leaf,
-  type LucideIcon,
-} from 'lucide-react';
-
+import * as LucideIcons from 'lucide-react';
+import { MapPin, type LucideIcon } from 'lucide-react';
 import type { POITag } from './types';
 
 export const getTagIcon = (
@@ -19,29 +9,37 @@ export const getTagIcon = (
     return { icon: MapPin, color: 'bg-blue-500' };
   }
 
-  const tagName = tags[0].name.toLowerCase();
+  const primaryTag = tags[0];
 
-  if (['restaurant', 'bakery'].includes(tagName)) {
-    return { icon: Utensils, color: 'bg-orange-500' };
-  }
-  if (tagName === 'cafe') {
-    return { icon: Coffee, color: 'bg-amber-600' };
-  }
-  if (['hill', 'mountain', 'mountain_biking'].includes(tagName)) {
-    return { icon: Mountain, color: 'bg-emerald-600' };
-  }
-  if (['park', 'atv'].includes(tagName)) {
-    return { icon: Bike, color: 'bg-green-500' };
-  }
-  if (['tourist_attraction', 'historical_landmark', 'church'].includes(tagName)) {
-    return { icon: Landmark, color: 'bg-purple-500' };
-  }
-  if (['hotel', 'resort'].includes(tagName)) {
-    return { icon: Bed, color: 'bg-indigo-500' };
-  }
-  if (tagName === 'spa') {
-    return { icon: Leaf, color: 'bg-teal-500' };
+  // Resolve the iconName: prefer specific tag icon, fallback to cluster general icon
+  const iconNameStr = primaryTag.iconName || primaryTag.cluster?.iconName;
+  
+  let icon: LucideIcon = MapPin;
+  if (iconNameStr && iconNameStr in LucideIcons) {
+    icon = (LucideIcons as any)[iconNameStr];
   }
 
-  return { icon: MapPin, color: 'bg-blue-500' };
+  // Derive color based on cluster
+  const clusterName = primaryTag.cluster?.name?.toLowerCase() || '';
+  let color = 'bg-blue-500'; // Default fallback
+
+  switch (clusterName) {
+    case 'eats':
+      color = 'bg-orange-500';
+      break;
+    case 'attractions':
+      color = 'bg-purple-500';
+      break;
+    case 'nature':
+      color = 'bg-emerald-600';
+      break;
+    case 'accomodations':
+      color = 'bg-indigo-500';
+      break;
+    case 'malls':
+      color = 'bg-amber-500';
+      break;
+  }
+
+  return { icon, color };
 };

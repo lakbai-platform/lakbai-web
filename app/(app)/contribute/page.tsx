@@ -1,9 +1,9 @@
-import ContributeMapArea from './_components/map-area';
+import MapArea from '@/components/map-area';
 
 export default function ContributePage() {
   return (
     <div className='bg-surface-light h-full w-full overflow-hidden'>
-      <ContributeMapArea />
+      <MapArea mode='contribute' />
     </div>
   );
 }
