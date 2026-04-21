@@ -21,6 +21,7 @@ export async function GET(request: Request) {
             include: {
                 tags: true,
                 galleries: true,
+                address: true,
                 // Calculate aggregations or fetch reviews if needed
             },
             orderBy: {
