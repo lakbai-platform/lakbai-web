@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import ExploreArea from './_components/explore-area';
 import MapArea from '@/components/map-area';
 
 export default function ExplorePage() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const contentContainerRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div className='flex h-full w-full overflow-hidden'>
+    <div
+      ref={contentContainerRef}
+      className='relative flex h-full w-full overflow-hidden'
+    >
       <div
         className={cn(
           'bg-surface border-border h-full transition-all duration-300 ease-in-out',
@@ -25,6 +29,7 @@ export default function ExplorePage() {
         <MapArea
           isExpanded={isMapExpanded}
           onToggleExpand={() => setIsMapExpanded(prev => !prev)}
+          overlayContainerRef={contentContainerRef}
         />
       </div>
     </div>

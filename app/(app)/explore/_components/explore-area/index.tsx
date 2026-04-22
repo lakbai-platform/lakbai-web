@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
-  Heart,
-  Info,
-  Landmark,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
   Plus,
   Search,
   SlidersHorizontal,
@@ -12,73 +14,183 @@ import {
 } from 'lucide-react';
 import { TextBody, TextHeading } from '@/components/text';
 import { cn } from '@/lib/cn';
-import LocationPicker from './LocationPicker';
+import {
+  getPrimaryTag,
+  getTagIcon,
+  getTagLabel,
+  getTagVisual
+} from '@/components/map-area/get-tag-icon';
+import type { POI } from '@/components/map-area/types';
 
-const categories = ['For You', 'Locations', 'Spots', 'Eats', 'Lodgings'];
+const categories = ['For You', 'Spots', 'Eats', 'Lodgings'] as const;
+type ExploreCategory = (typeof categories)[number];
 
-// Dynamic data note:
-// Replace this mocked array with API data from your backend.
-// Dynamic fields per card: title, rating, reviewCount, typeLabel, location,
-// sourceName, sourceAvatarText, imagePlaceholderTone and gallery images.
-const mockExploreCards = [
-  {
-    id: '1',
-    title: 'CamSur Watersports Complex',
-    rating: 4.4,
-    reviewCount: '2.3k',
-    typeLabel: 'Attraction',
-    location: 'Pili, Bicol',
-    sourceName: 'MI JALBUENA',
-    sourceAvatarText: 'MJ',
-    imagePlaceholderTone: 'from-primary-100 to-primary-300'
-  },
-  {
-    id: '2',
-    title: 'Minor Basilica and National Shrine of Our Lady of Penafrancia',
-    rating: 4.8,
-    reviewCount: '2.2k',
-    typeLabel: 'Attraction',
-    location: 'Naga, Bicol',
-    sourceName: 'CITY GUIDE',
-    sourceAvatarText: 'CG',
-    imagePlaceholderTone: 'from-secondary-100 to-primary-200'
-  },
-  {
-    id: '3',
-    title: 'Historic Church Interior',
-    rating: 4.6,
-    reviewCount: '1.1k',
-    typeLabel: 'Spot',
-    location: 'Naga, Bicol',
-    sourceName: 'HERITAGE PH',
-    sourceAvatarText: 'HP',
-    imagePlaceholderTone: 'from-primary-50 to-secondary-200'
-  },
-  {
-    id: '4',
-    title: 'Central Plaza Landmark',
-    rating: 4.5,
-    reviewCount: '980',
-    typeLabel: 'Location',
-    location: 'Naga, Bicol',
-    sourceName: 'LOCAL STORIES',
-    sourceAvatarText: 'LS',
-    imagePlaceholderTone: 'from-secondary-50 to-primary-200'
+const SPOTS_CLUSTERS = new Set(['attractions', 'nature', 'malls']);
+const EATS_CLUSTERS = new Set(['food', 'eats']);
+const LODGING_CLUSTERS = new Set(['accomodations', 'accommodations']);
+const MAX_FOR_YOU_ITEMS = 8;
+
+function shuffle<T>(items: T[]): T[] {
+  const cloned = [...items];
+
+  for (let i = cloned.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
   }
-];
+
+  return cloned;
+}
+
+function normalizePoi(poi: Partial<POI>): POI {
+  return {
+    id: poi.id ?? '',
+    name: poi.name ?? '',
+    description: poi.description ?? '',
+    latitude: Number(poi.latitude ?? 0),
+    longitude: Number(poi.longitude ?? 0),
+    vouchCount: Number(poi.vouchCount ?? 0),
+    primaryTagId: poi.primaryTagId ?? null,
+    tags: poi.tags ?? [],
+    galleries: poi.galleries ?? [],
+    address: poi.address ?? null
+  };
+}
+
+function getClusterKey(poi: POI): string {
+  const primaryTag = getPrimaryTag(poi.tags ?? [], poi.primaryTagId);
+  const rawCluster = primaryTag?.cluster?.id ?? primaryTag?.cluster?.name ?? '';
+  return rawCluster.trim().toLowerCase();
+}
+
+function buildForYou(pois: POI[]): POI[] {
+  if (pois.length <= 1) return pois;
+
+  const groupedByCluster = new Map<string, POI[]>();
+  for (const poi of pois) {
+    const key = getClusterKey(poi) || 'uncategorized';
+    if (!groupedByCluster.has(key)) {
+      groupedByCluster.set(key, []);
+    }
+    groupedByCluster.get(key)?.push(poi);
+  }
+
+  const picks: POI[] = [];
+  for (const clusterKey of shuffle(Array.from(groupedByCluster.keys()))) {
+    const clusterPois = groupedByCluster.get(clusterKey) ?? [];
+    if (clusterPois.length > 0) {
+      picks.push(shuffle(clusterPois)[0]);
+    }
+  }
+
+  const pickedIds = new Set(picks.map(poi => poi.id));
+  const remaining = shuffle(pois.filter(poi => !pickedIds.has(poi.id)));
+
+  return [...picks, ...remaining].slice(0, MAX_FOR_YOU_ITEMS);
+}
 
 export default function ExploreArea() {
-  const [activeCategory, setActiveCategory] = useState('For You');
-  const [selectedLocation, setSelectedLocation] = useState('Naga');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [activeCategory, setActiveCategory] =
+    useState<ExploreCategory>('For You');
+  const [searchText, setSearchText] = useState('');
+  const [pois, setPois] = useState<POI[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
+  const [forYouNonce, setForYouNonce] = useState(0);
+
+  useEffect(() => {
+    const loadPois = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch('/api/pois');
+        if (!response.ok) {
+          throw new Error('Failed to fetch POIs');
+        }
+
+        const data = (await response.json()) as { pois?: Partial<POI>[] };
+        const normalized = (data.pois ?? []).map(normalizePoi);
+        setPois(normalized);
+        setForYouNonce(prev => prev + 1);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch POIs');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadPois();
+  }, []);
+
+  const searchedPois = useMemo(() => {
+    const needle = searchText.trim().toLowerCase();
+    if (!needle) return pois;
+
+    return pois.filter(poi => {
+      const tags = (poi.tags ?? []).map(tag => tag.name).join(' ');
+      const clusters = (poi.tags ?? [])
+        .map(tag => tag.cluster?.name ?? tag.cluster?.id ?? '')
+        .join(' ');
+      const address = [
+        poi.address?.street,
+        poi.address?.barangay,
+        poi.address?.cityMunicipality,
+        poi.address?.province
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      const haystack =
+        `${poi.name} ${poi.description} ${tags} ${clusters} ${address}`.toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [pois, searchText]);
+
+  const visiblePois = useMemo(() => {
+    switch (activeCategory) {
+      case 'For You':
+        return buildForYou(searchedPois);
+      case 'Spots':
+        return searchedPois.filter(poi =>
+          SPOTS_CLUSTERS.has(getClusterKey(poi))
+        );
+      case 'Eats':
+        return searchedPois.filter(poi =>
+          EATS_CLUSTERS.has(getClusterKey(poi))
+        );
+      case 'Lodgings':
+        return searchedPois.filter(poi =>
+          LODGING_CLUSTERS.has(getClusterKey(poi))
+        );
+      default:
+        return searchedPois;
+    }
+  }, [activeCategory, searchedPois, forYouNonce]);
+
+  const updateImageIndex = (poiId: string, nextIndex: number) => {
+    setImageIndices(prev => ({
+      ...prev,
+      [poiId]: nextIndex
+    }));
+  };
+
+  const openPoiDetails = (poiId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('poi', poiId);
+
+    const nextQuery = params.toString();
+    const nextPath = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+    router.replace(nextPath, { scroll: false });
+  };
 
   return (
     <div className='scrollbar-invisible bg-surface text-text-main h-full w-full overflow-y-auto'>
       <div className='w-full px-4 py-6 sm:px-6 sm:py-8'>
-        <LocationPicker
-          location={selectedLocation}
-          onLocationSelect={setSelectedLocation}
-        />
-
         <div className='mb-5 flex flex-col gap-3 sm:flex-row'>
           <div className='relative flex-1'>
             <Search
@@ -88,6 +200,8 @@ export default function ExploreArea() {
             <input
               type='text'
               placeholder='Search'
+              value={searchText}
+              onChange={event => setSearchText(event.target.value)}
               className='border-border text-text-main placeholder:text-text-muted focus:border-primary-300 bg-background h-12 w-full rounded-xl border py-3 pr-4 pl-11 text-[15px] outline-none'
             />
           </div>
@@ -109,7 +223,12 @@ export default function ExploreArea() {
               <button
                 key={category}
                 type='button'
-                onClick={() => setActiveCategory(category)}
+                onClick={() => {
+                  setActiveCategory(category);
+                  if (category === 'For You') {
+                    setForYouNonce(prev => prev + 1);
+                  }
+                }}
                 className={cn(
                   'rounded-full border px-4 py-2 text-sm font-medium transition',
                   isActive
@@ -124,97 +243,203 @@ export default function ExploreArea() {
         </div>
 
         <section>
-          {/* Dynamic data note: section heading can come from selected category */}
           <TextHeading className='text-text-main mb-5'>
-            Things To Do
+            {activeCategory}
           </TextHeading>
 
-          <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
-            {mockExploreCards.map(card => (
-              <article key={card.id} className='min-w-0'>
-                <div
-                  className={cn(
-                    'relative h-60 overflow-hidden rounded-2xl bg-linear-to-br',
-                    card.imagePlaceholderTone
-                  )}
-                >
-                  {/* Dynamic data note: replace this colored div with image carousel/media */}
-                  <div className='absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0)_45%,rgba(1,31,36,0.14)_100%)]' />
+          {isLoading && (
+            <div className='text-text-muted rounded-xl border border-dashed p-6 text-sm'>
+              Loading points of interest...
+            </div>
+          )}
 
-                  <div className='absolute top-3 right-3 flex items-center gap-2'>
-                    <button
-                      type='button'
-                      className='text-text-main border-border bg-background/90 hover:bg-surface-light flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-sm transition'
-                    >
-                      <Heart className='h-4 w-4' />
-                    </button>
-                    <button
-                      type='button'
-                      className='text-text-main border-border bg-background/90 hover:bg-surface-light flex h-8 w-8 items-center justify-center rounded-full border backdrop-blur-sm transition'
-                    >
-                      <Plus className='h-4 w-4' />
-                    </button>
-                  </div>
+          {!isLoading && error && (
+            <div className='rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700'>
+              Failed to load POIs: {error}
+            </div>
+          )}
 
-                  <div className='absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5'>
-                    {[0, 1, 2, 3, 4].map(dot => (
-                      <span
-                        key={dot}
-                        className={cn(
-                          'h-1.5 w-1.5 rounded-full',
-                          dot === 0 ? 'bg-primary-700' : 'bg-primary-700/45'
-                        )}
-                      />
-                    ))}
-                  </div>
+          {!isLoading && !error && visiblePois.length === 0 && (
+            <div className='text-text-muted rounded-xl border border-dashed p-6 text-sm'>
+              No POIs matched this filter.
+            </div>
+          )}
 
-                  <button
-                    type='button'
-                    className='text-text-main hover:text-primary-700 absolute right-3 bottom-3'
+          {!isLoading && !error && visiblePois.length > 0 && (
+            <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
+              {visiblePois.map(poi => {
+                const images = poi.galleries ?? [];
+                const currentImageIndex = imageIndices[poi.id] ?? 0;
+                const primaryTag = getPrimaryTag(
+                  poi.tags ?? [],
+                  poi.primaryTagId
+                );
+                const { icon: TagIcon } = getTagIcon(
+                  poi.tags ?? [],
+                  poi.primaryTagId
+                );
+                const { color } = getTagVisual(primaryTag);
+                const detailAddress = poi.address
+                  ? [poi.address.cityMunicipality, poi.address.province]
+                      .filter(Boolean)
+                      .join(', ') || 'Unknown Location'
+                  : 'Unknown Location';
+
+                return (
+                  <article
+                    key={poi.id}
+                    role='button'
+                    tabIndex={0}
+                    onClick={() => openPoiDetails(poi.id)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openPoiDetails(poi.id);
+                      }
+                    }}
+                    className='bg-background focus-visible:ring-primary-500 min-w-0 cursor-pointer overflow-hidden rounded-2xl border transition hover:shadow-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
                   >
-                    <Info className='h-4 w-4' />
-                  </button>
-                </div>
+                    <div className='group relative h-60 w-full shrink-0 overflow-hidden'>
+                      {images.length > 0 ? (
+                        <img
+                          src={images[currentImageIndex].imageUrl}
+                          alt={poi.name}
+                          className='h-full w-full object-cover'
+                        />
+                      ) : (
+                        <div className='bg-muted flex h-full w-full items-center justify-center'>
+                          <span className='text-muted-foreground text-xs'>
+                            No image
+                          </span>
+                        </div>
+                      )}
 
-                <div className='mt-3 space-y-1.5'>
-                  <div className='flex items-start justify-between gap-3'>
-                    {/* Dynamic data note: place title field here */}
-                    <h3 className='text-text-main text-[20px] leading-snug font-semibold'>
-                      {card.title}
-                    </h3>
+                      <div className='pointer-events-none absolute inset-0 bg-linear-to-b from-black/45 via-transparent to-transparent' />
+                      <div className='pointer-events-none absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent' />
 
-                    {/* Dynamic data note: rating and review count */}
-                    <p className='text-text-main mt-1 inline-flex shrink-0 items-center gap-1 text-sm font-semibold'>
-                      <Star className='h-3.5 w-3.5 fill-current' />
-                      {card.rating}{' '}
-                      <span className='text-text-muted'>
-                        ({card.reviewCount})
-                      </span>
-                    </p>
-                  </div>
+                      <div className='absolute top-3 right-3 z-10 flex items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={event => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          className='flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50'
+                        >
+                          <Bookmark className='h-4 w-4' />
+                        </button>
+                        <button
+                          type='button'
+                          onClick={event => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          className='flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition hover:bg-black/50'
+                        >
+                          <Plus className='h-4 w-4' />
+                        </button>
+                      </div>
 
-                  <p className='text-text-muted flex items-center gap-1.5 text-sm'>
-                    <Landmark className='text-text-muted h-4 w-4' />
-                    {card.typeLabel}
-                  </p>
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            type='button'
+                            onClick={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              const nextIndex =
+                                currentImageIndex === 0
+                                  ? Math.max(0, images.length - 1)
+                                  : currentImageIndex - 1;
+                              updateImageIndex(poi.id, nextIndex);
+                            }}
+                            className='absolute top-1/2 left-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100 hover:bg-black/50'
+                          >
+                            <ChevronLeft className='h-4 w-4' />
+                          </button>
+                          <button
+                            type='button'
+                            onClick={event => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              const nextIndex =
+                                currentImageIndex === images.length - 1
+                                  ? 0
+                                  : currentImageIndex + 1;
+                              updateImageIndex(poi.id, nextIndex);
+                            }}
+                            className='absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white opacity-0 backdrop-blur-md transition group-hover:opacity-100 hover:bg-black/50'
+                          >
+                            <ChevronRight className='h-4 w-4' />
+                          </button>
 
-                  <TextBody className='text-text-muted leading-5'>
-                    {card.location}
-                  </TextBody>
+                          <div className='absolute right-0 bottom-3 left-0 flex justify-center gap-1'>
+                            {images.map((_, dotIndex) => (
+                              <span
+                                key={`${poi.id}-dot-${dotIndex}`}
+                                className={cn(
+                                  'h-1.5 w-1.5 rounded-full transition-all',
+                                  currentImageIndex === dotIndex
+                                    ? 'bg-white'
+                                    : 'bg-white/50'
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
 
-                  <div className='pt-1.5'>
-                    {/* Dynamic data note: source avatar/name from user or curator */}
-                    <p className='text-text-muted inline-flex items-center gap-2 text-sm'>
-                      <span className='bg-primary-100 text-primary-700 flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold'>
-                        {card.sourceAvatarText}
-                      </span>
-                      Mentioned by {card.sourceName}
-                    </p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <div className='space-y-2 p-4'>
+                      <div className='flex items-start justify-between gap-3 border-b pb-2'>
+                        <h3 className='text-text-main line-clamp-2 flex-1 text-[20px] leading-snug font-semibold'>
+                          {poi.name}
+                        </h3>
+
+                        <p className='text-text-main mt-1 inline-flex shrink-0 items-center gap-1 text-sm font-semibold'>
+                          <Star className='h-3.5 w-3.5 fill-current' />
+                          4.6{' '}
+                          <span className='text-text-muted'>
+                            ({poi.vouchCount})
+                          </span>
+                        </p>
+                      </div>
+
+                      <p className='text-text-muted flex items-center gap-1.5 text-sm font-medium'>
+                        <span
+                          className={cn(
+                            'inline-flex h-5 w-5 items-center justify-center rounded-full text-white',
+                            color
+                          )}
+                        >
+                          <TagIcon className='h-3 w-3' />
+                        </span>
+                        {primaryTag ? getTagLabel(primaryTag) : 'Location'}
+                      </p>
+
+                      <button
+                        type='button'
+                        onClick={event => {
+                          event.stopPropagation();
+                          openPoiDetails(poi.id);
+                        }}
+                        className='text-text-muted hover:text-text-main inline-flex items-center gap-1.5 text-left text-sm leading-5 transition'
+                      >
+                        <MapPin className='h-4 w-4 shrink-0' />
+                        <span>{detailAddress}</span>
+                      </button>
+
+                      {poi.description && (
+                        <TextBody className='text-text-muted line-clamp-2 text-sm leading-5'>
+                          {poi.description}
+                        </TextBody>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       </div>
     </div>

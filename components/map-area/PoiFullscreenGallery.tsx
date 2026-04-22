@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Heart, PlusCircle, Share } from 'lucide-react';
+import { X, Bookmark, PlusCircle, Share } from 'lucide-react';
 
 import type { POIGallery } from '@/components/map-area/types';
 
@@ -36,18 +36,18 @@ export default function PoiFullscreenGallery({
   }
 
   return createPortal(
-    <div className='fixed inset-0 z-[100] overflow-y-auto bg-background'>
-      <div className='sticky top-0 z-10 flex items-center justify-between border-b border-text-main/10 bg-surface px-4 py-3 sm:px-10'>
+    <div className='bg-background fixed inset-0 z-[100] overflow-y-auto'>
+      <div className='border-text-main/10 bg-surface sticky top-0 z-10 flex items-center justify-between border-b px-4 py-3 sm:px-10'>
         <div className='flex items-center gap-4'>
           <button
             type='button'
             onClick={onClose}
-            className='inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-text-main  transition hover:bg-text-main/10'
+            className='text-text-main hover:bg-text-main/10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-transparent transition'
             aria-label='Close full-screen gallery'
           >
             <X className='h-5 w-5' />
           </button>
-          <h3 className='truncate text-sm font-semibold text-text-main sm:text-base'>
+          <h3 className='text-text-main truncate text-sm font-semibold sm:text-base'>
             {title}
           </h3>
         </div>
@@ -55,38 +55,38 @@ export default function PoiFullscreenGallery({
         <div className='flex items-center gap-2'>
           <button
             type='button'
-            className='inline-flex h-9 items-center gap-2 rounded-full border border-text-main bg-surface px-4 text-xs font-medium text-text-main transition hover:bg-text-main/10'
+            className='border-text-main bg-surface text-text-main hover:bg-text-main/10 inline-flex h-9 items-center gap-2 rounded-full border px-4 text-xs font-medium transition'
             onClick={onSave}
           >
-            <Heart className='h-3.5 w-3.5' /> Save
+            <Bookmark className='h-3.5 w-3.5' /> Save
           </button>
           <button
             type='button'
-            className='border-text-main text-text-main inline-flex h-9 items-center gap-1.5 rounded-full border bg-surface px-4 text-xs font-medium hover:bg-text-main/10'
+            className='border-text-main text-text-main bg-surface hover:bg-text-main/10 inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-xs font-medium'
           >
             <PlusCircle className='h-3.5 w-3.5' /> Add to Journey
           </button>
           <button
             type='button'
-            className='inline-flex h-9 w-9 items-center justify-center rounded-full border border-text-main bg-transparent text-text-main transition hover:bg-text-main/10'
+            className='border-text-main text-text-main hover:bg-text-main/10 inline-flex h-9 w-9 items-center justify-center rounded-full border bg-transparent transition'
             onClick={onShare}
             title='Share'
           >
-            <Share className='h-3.5 w-3.5 text-text-main' />
+            <Share className='text-text-main h-3.5 w-3.5' />
           </button>
         </div>
       </div>
 
       <div className='flex w-full flex-col gap-16 py-10'>
         {images.length === 0 ? (
-          <div className='flex h-[calc(100vh-144px)] w-full items-center justify-center bg-black text-sm text-white/80 shrink-0'>
+          <div className='flex h-[calc(100vh-144px)] w-full shrink-0 items-center justify-center bg-black text-sm text-white/80'>
             No gallery images available for this location.
           </div>
         ) : (
           images.map((image, index) => (
             <figure
               key={image.id || `${image.imageUrl}-${index}`}
-              className='relative flex h-[calc(100vh-144px)] w-full shrink-0 items-center justify-center bg-background overflow-hidden'
+              className='bg-background relative flex h-[calc(100vh-144px)] w-full shrink-0 items-center justify-center overflow-hidden'
             >
               <img
                 src={image.imageUrl}

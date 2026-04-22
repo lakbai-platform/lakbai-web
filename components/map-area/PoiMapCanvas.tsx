@@ -64,7 +64,10 @@ export default function PoiMapCanvas({
       {showControls && <MapControls className={controlsClassName} />}
 
       {pois.map(poi => {
-        const { icon: Icon, color } = getTagIcon(poi.tags || []);
+        const { icon: Icon, color } = getTagIcon(
+          poi.tags || [],
+          poi.primaryTagId
+        );
         const isSelected = selectedPoiId === poi.id;
 
         return (

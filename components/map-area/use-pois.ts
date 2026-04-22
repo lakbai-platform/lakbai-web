@@ -19,6 +19,7 @@ function normalizePoi(poi: Partial<POI>): POI {
     latitude: Number(poi.latitude ?? 0),
     longitude: Number(poi.longitude ?? 0),
     vouchCount: Number(poi.vouchCount ?? 0),
+    primaryTagId: poi.primaryTagId ?? null,
     tags: poi.tags ?? [],
     galleries: poi.galleries ?? [],
     address: poi.address ?? null,

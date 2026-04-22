@@ -1,26 +1,34 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef, type RefObject } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeftFromLine, ArrowRightFromLine, Eye, MapPinPlusInside } from 'lucide-react';
+import {
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
+  Eye,
+  MapPinPlusInside
+} from 'lucide-react';
 import type { MapRef } from '@/components/ui/map';
 
 import PoiMapCanvas from './PoiMapCanvas';
 import { usePois } from './use-pois';
 import PoiDetailsOverlay from './PoiDetailsOverlay';
 import PoiHoverCard from './PoiHoverCard';
+import { getTagLabel, getTagVisual } from './get-tag-icon';
 import type { POI } from './types';
 
 type MapAreaProps = {
   mode?: 'view' | 'contribute';
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  overlayContainerRef?: RefObject<HTMLElement | null>;
 };
 
 export default function MapArea({
   mode = 'view',
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
+  overlayContainerRef
 }: MapAreaProps) {
   const { pois, isLoading: isPoisLoading } = usePois();
   const [selectedPoiId, setSelectedPoiId] = useState<string | null>(null);
@@ -41,7 +49,7 @@ export default function MapArea({
     'pointer-events-none absolute top-1/2 left-full z-40 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-primary-dark-700 bg-primary-dark-900 px-2.5 py-1.5 text-xs font-medium text-primary-dark-50 opacity-0 shadow-sm transition-opacity group-hover/map-toggle:opacity-100';
 
   const combinedPois = useMemo(() => {
-    if (isolatedPoi && !pois.some((p) => p.id === isolatedPoi.id)) {
+    if (isolatedPoi && !pois.some(p => p.id === isolatedPoi.id)) {
       return [...pois, isolatedPoi];
     }
     return pois;
@@ -123,37 +131,38 @@ export default function MapArea({
     if (isPoisLoading) return;
 
     const existsInBatch = pois.some(poi => poi.id === poiFromUrl);
-    
+
     if (existsInBatch) {
       setSelectedPoiId(poiFromUrl);
     } else {
       // Dynamic hydration logic for isolated POIs
       fetch(`/api/pois/${poiFromUrl}`)
-        .then((res) => {
-           if (!res.ok) throw new Error('Dynamic POI fetch failed');
-           return res.json();
+        .then(res => {
+          if (!res.ok) throw new Error('Dynamic POI fetch failed');
+          return res.json();
         })
-        .then((data) => {
-           if (data.poi) {
-             // Normalize to match types
-             const p = data.poi;
-             setIsolatedPoi({
-               ...p,
-               latitude: Number(p.latitude),
-               longitude: Number(p.longitude),
-               vouchCount: Number(p.vouchCount),
-               tags: p.tags || [],
-               galleries: p.galleries || [],
-               address: p.address || null,
-             });
-             setSelectedPoiId(poiFromUrl);
-           } else {
-             setSelectedPoiId(null);
-           }
+        .then(data => {
+          if (data.poi) {
+            // Normalize to match types
+            const p = data.poi;
+            setIsolatedPoi({
+              ...p,
+              latitude: Number(p.latitude),
+              longitude: Number(p.longitude),
+              vouchCount: Number(p.vouchCount),
+              primaryTagId: p.primaryTagId ?? null,
+              tags: p.tags || [],
+              galleries: p.galleries || [],
+              address: p.address || null
+            });
+            setSelectedPoiId(poiFromUrl);
+          } else {
+            setSelectedPoiId(null);
+          }
         })
-        .catch((err) => {
-           console.error(err);
-           setSelectedPoiId(null);
+        .catch(err => {
+          console.error(err);
+          setSelectedPoiId(null);
         });
     }
   }, [pois, searchParams, isPoisLoading]);
@@ -225,44 +234,61 @@ export default function MapArea({
         selectedPoiId={selectedPoiId}
         onMarkerClick={poi => handleOpenPoi(poi.id)}
         mapClassName={
-          isContribute && isAddLocationMode ? '[&_.maplibregl-canvas]:cursor-crosshair' : ''
+          isContribute && isAddLocationMode
+            ? '[&_.maplibregl-canvas]:cursor-crosshair'
+            : ''
         }
         controlsClassName={isContribute ? '[&_button]:cursor-default' : ''}
-        markerContentClassName={isContribute && isAddLocationMode ? 'cursor-default' : ''}
-        renderPopup={isContribute ? poi => (
-          <>
-            <h3 className='text-foreground text-sm leading-tight font-semibold'>
-              {poi.name}
-            </h3>
-            <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-              {poi.description}
-            </p>
+        markerContentClassName={
+          isContribute && isAddLocationMode ? 'cursor-default' : ''
+        }
+        renderPopup={
+          isContribute
+            ? poi => (
+                <>
+                  <h3 className='text-foreground text-sm leading-tight font-semibold'>
+                    {poi.name}
+                  </h3>
+                  <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
+                    {poi.description}
+                  </p>
 
-            <div className='mt-2 flex flex-wrap gap-1'>
-              {poi.tags?.map(tag => (
-                <span
-                  key={tag.id}
-                  className='bg-secondary text-secondary-foreground rounded-sm px-1.5 py-0.5 text-[10px]'
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
+                  <div className='mt-2 flex flex-wrap gap-1'>
+                    {poi.tags?.map(tag => {
+                      const { icon: TagIcon, color } = getTagVisual(tag);
 
-            <div className='border-border/50 mt-2 flex items-center gap-2 border-t pt-2 text-xs'>
-              <span className='text-primary font-medium'>
-                👍 {poi.vouchCount} Vouches
-              </span>
-            </div>
-          </>
-        ) : undefined}
-        renderHoverPopup={(!isContribute || !isAddLocationMode) ? (poi) => (
-          <PoiHoverCard 
-            poi={poi} 
-            onFavorite={(id) => console.log('Favorited', id)} 
-            onAdd={(id) => handleOpenPoi(id)} 
-          />
-        ) : undefined}
+                      return (
+                        <span
+                          key={tag.id}
+                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${color}`}
+                        >
+                          <TagIcon className='h-2.5 w-2.5' />
+                          {getTagLabel(tag)}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <div className='border-border/50 mt-2 flex items-center gap-2 border-t pt-2 text-xs'>
+                    <span className='text-primary font-medium'>
+                      👍 {poi.vouchCount} Vouches
+                    </span>
+                  </div>
+                </>
+              )
+            : undefined
+        }
+        renderHoverPopup={
+          !isContribute || !isAddLocationMode
+            ? poi => (
+                <PoiHoverCard
+                  poi={poi}
+                  onFavorite={id => console.log('Favorited', id)}
+                  onAdd={id => handleOpenPoi(id)}
+                />
+              )
+            : undefined
+        }
       />
 
       {selectedPoi && !isAddLocationMode && (
@@ -271,6 +297,7 @@ export default function MapArea({
           copied={copied}
           onClose={handleClosePoi}
           onCopyShareUrl={handleCopyShareUrl}
+          portalContainer={overlayContainerRef?.current}
         />
       )}
     </div>

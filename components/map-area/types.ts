@@ -31,6 +31,7 @@ export type POI = {
   latitude: number;
   longitude: number;
   vouchCount: number;
+  primaryTagId?: string | null;
   tags: POITag[];
   galleries: POIGallery[];
   address?: POIAddress | null;

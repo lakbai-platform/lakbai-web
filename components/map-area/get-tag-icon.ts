@@ -1,9 +1,10 @@
 import {
   MapPin, Utensils, Landmark, TreePine, Bed, ShoppingBag,
   Beer, Coffee, Croissant, CookingPot, Church,
-  Shrub, Footprints, Mountain, Tractor, Binoculars, Hotel, Road,
+  Shrub, Footprints, Mountain, Tractor, Binoculars, Hotel, Route as Road,
   ShoppingBasket
 } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { POITag } from './types';
 
 import { Chapel } from '@/components/icons/Chapel';
@@ -25,50 +26,113 @@ const lucideIconsMap: Record<string, React.ElementType> = {
   Road, ShoppingBasket, MapPin
 };
 
-export const getTagIcon = (
-  tags: POITag[]
-): { icon: any; color: string } => {
-  if (!tags || tags.length === 0) {
-    return { icon: MapPin, color: 'bg-blue-500' };
-  }
+type TagIconComponent = ComponentType<{ className?: string }>;
 
-  const primaryTag = tags[0];
+export type TagVisual = {
+  icon: TagIconComponent;
+  color: string;
+  clusterLabel: string;
+};
 
-  const iconNameStr = primaryTag.iconName || primaryTag.cluster?.iconName;
+function toClusterKey(clusterName?: string | null): string {
+  return (clusterName ?? '').trim().toLowerCase();
+}
 
-  let icon: any = MapPin;
-  if (iconNameStr?.startsWith('custom:')) {
-    const customName = iconNameStr.replace('custom:', '');
-    if (customIcons[customName]) {
-      icon = customIcons[customName];
-    }
-  } else if (iconNameStr && lucideIconsMap[iconNameStr]) {
-    icon = lucideIconsMap[iconNameStr];
-  }
+function toClusterLabel(clusterName?: string | null): string {
+  const key = toClusterKey(clusterName);
 
-  // Derive color based on cluster
-  const clusterName = primaryTag.cluster?.name?.toLowerCase() || '';
-  let color = 'bg-blue-500'; // Default fallback
+  if (!key) return '';
+  if (key === 'food' || key === 'eats') return 'Food';
+  if (key === 'attractions') return 'Attractions';
+  if (key === 'nature') return 'Nature';
+  if (key === 'accommodations' || key === 'accomodations') return 'Accommodations';
+  if (key === 'malls') return 'Malls';
 
-  switch (clusterName) {
+  return clusterName ?? '';
+}
+
+function getClusterColor(clusterName?: string | null): string {
+  const clusterKey = toClusterKey(clusterName);
+
+  switch (clusterKey) {
     case 'food':
-    case 'eats': // graceful fallback for old data
-      color = 'bg-orange-500';
-      break;
+    case 'eats':
+      return 'bg-orange-500';
     case 'attractions':
-      color = 'bg-purple-500';
-      break;
+      return 'bg-purple-500';
     case 'nature':
-      color = 'bg-emerald-600';
-      break;
+      return 'bg-emerald-600';
     case 'accommodations':
     case 'accomodations':
-      color = 'bg-indigo-500';
-      break;
+      return 'bg-indigo-500';
     case 'malls':
-      color = 'bg-amber-500';
-      break;
+      return 'bg-amber-500';
+    default:
+      return 'bg-blue-500';
+  }
+}
+
+function resolveTagIcon(iconName?: string | null): TagIconComponent {
+  if (!iconName) return MapPin;
+
+  if (iconName.startsWith('custom:')) {
+    const customName = iconName.replace('custom:', '');
+    if (customIcons[customName]) {
+      return customIcons[customName] as TagIconComponent;
+    }
+
+    return MapPin;
   }
 
+  if (lucideIconsMap[iconName]) {
+    return lucideIconsMap[iconName] as TagIconComponent;
+  }
+
+  return MapPin;
+}
+
+export function getPrimaryTag(
+  tags: POITag[],
+  primaryTagId?: string | null
+): POITag | undefined {
+  if (!tags || tags.length === 0) return undefined;
+
+  if (primaryTagId) {
+    const matchedTag = tags.find((tag) => tag.id === primaryTagId);
+    if (matchedTag) return matchedTag;
+  }
+
+  return tags[0];
+}
+
+export function getTagVisual(tag?: POITag | null): TagVisual {
+  if (!tag) {
+    return {
+      icon: MapPin,
+      color: 'bg-blue-500',
+      clusterLabel: '',
+    };
+  }
+
+  const iconNameStr = tag.iconName || tag.cluster?.iconName;
+
+  return {
+    icon: resolveTagIcon(iconNameStr),
+    color: getClusterColor(tag.cluster?.name),
+    clusterLabel: toClusterLabel(tag.cluster?.name),
+  };
+}
+
+export const getTagIcon = (
+  tags: POITag[],
+  primaryTagId?: string | null
+): { icon: TagIconComponent; color: string } => {
+  const primaryTag = getPrimaryTag(tags, primaryTagId);
+  const { icon, color } = getTagVisual(primaryTag);
   return { icon, color };
 };
+
+export function getTagLabel(tag: POITag): string {
+  const visual = getTagVisual(tag);
+  return visual.clusterLabel ? `${visual.clusterLabel} • ${tag.name}` : tag.name;
+}

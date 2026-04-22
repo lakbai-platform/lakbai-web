@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
-  ArrowLeft,
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
   Star,
-  Share2,
+  Share,
   Bookmark,
   PlusCircle,
   ExternalLink,
@@ -17,8 +19,9 @@ import {
 import PoiMapCanvas from '@/components/map-area/PoiMapCanvas';
 import type { POI } from '@/components/map-area/types';
 import PoiFullscreenGallery from './PoiFullscreenGallery';
-import { getTagIcon } from './get-tag-icon';
+import { getTagLabel, getTagVisual } from './get-tag-icon';
 import { TextHeading, TextBody } from '@/components/text';
+import { cn } from '@/lib/cn';
 
 type DetailTab = 'description' | 'reviews' | 'location';
 
@@ -66,20 +69,24 @@ type PoiDetailsOverlayProps = {
   copied: boolean;
   onClose: () => void;
   onCopyShareUrl: () => void;
+  portalContainer?: HTMLElement | null;
 };
 
 export default function PoiDetailsOverlay({
   poi,
   copied,
   onClose,
-  onCopyShareUrl
+  onCopyShareUrl,
+  portalContainer
 }: PoiDetailsOverlayProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('description');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(false);
 
   useEffect(() => {
     setActiveTab('description');
     setIsGalleryOpen(false);
+    setIsDetailsExpanded(false);
   }, [poi.id]);
 
   const galleryImages = useMemo(
@@ -118,9 +125,16 @@ export default function PoiDetailsOverlay({
 
   const focusedCenter: [number, number] = [poi.longitude, poi.latitude];
 
-  return (
+  const overlayContent = (
     <div className='bg-background/95 absolute inset-0 z-40 overflow-y-auto backdrop-blur-sm'>
-      <div className='mx-auto flex w-full max-w-5xl flex-col px-4 pt-4 pb-12 sm:px-6 sm:pt-6'>
+      <div
+        className={cn(
+          'mx-auto flex w-full flex-col pt-4 pb-12 sm:pt-6',
+          isDetailsExpanded
+            ? 'max-w-none px-3 sm:px-5 lg:px-8'
+            : 'max-w-5xl px-4 sm:px-6'
+        )}
+      >
         <div className='flex items-center justify-between gap-3'>
           <div className='flex items-center gap-2'>
             <button
@@ -133,11 +147,19 @@ export default function PoiDetailsOverlay({
             </button>
             <button
               type='button'
-              onClick={onClose}
+              onClick={() => setIsDetailsExpanded(prev => !prev)}
               className='text-foreground hover:bg-muted inline-flex h-8 w-8 items-center justify-center rounded-full transition'
-              aria-label='Back to map'
+              aria-label={
+                isDetailsExpanded
+                  ? 'Collapse details view'
+                  : 'Expand details view'
+              }
             >
-              <ArrowLeft className='h-5 w-5' />
+              {isDetailsExpanded ? (
+                <ArrowRightFromLine className='h-5 w-5' />
+              ) : (
+                <ArrowLeftFromLine className='h-5 w-5' />
+              )}
             </button>
           </div>
 
@@ -161,7 +183,7 @@ export default function PoiDetailsOverlay({
               aria-label='Copy share link'
               title={copied ? 'Copied!' : 'Copy share link'}
             >
-              <Share2 className='h-4 w-4' />
+              <Share className='h-4 w-4' />
             </button>
           </div>
         </div>
@@ -183,14 +205,14 @@ export default function PoiDetailsOverlay({
           {poi.tags && poi.tags.length > 0 && (
             <div className='mt-3 flex flex-wrap gap-2'>
               {poi.tags.map(tag => {
-                const { icon: TagIcon, color } = getTagIcon([tag]);
+                const { icon: TagIcon, color } = getTagVisual(tag);
                 return (
                   <span
                     key={tag.id}
                     className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white ${color}`}
                   >
                     <TagIcon className='h-3.5 w-3.5' />
-                    {tag.cluster ? `${tag.cluster.name} • ${tag.name}` : tag.name}
+                    {getTagLabel(tag)}
                   </span>
                 );
               })}
@@ -350,7 +372,9 @@ export default function PoiDetailsOverlay({
               </div>
 
               <div>
-                <TextBody className='text-foreground font-semibold'>Operating Hours</TextBody>
+                <TextBody className='text-foreground font-semibold'>
+                  Operating Hours
+                </TextBody>
                 <TextBody className='mt-1 font-semibold text-emerald-600'>
                   Open Now
                 </TextBody>
@@ -460,4 +484,10 @@ export default function PoiDetailsOverlay({
       />
     </div>
   );
+
+  if (isDetailsExpanded && portalContainer) {
+    return createPortal(overlayContent, portalContainer);
+  }
+
+  return overlayContent;
 }
