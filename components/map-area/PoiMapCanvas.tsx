@@ -8,6 +8,7 @@ import {
   MapMarker,
   MarkerContent,
   MarkerPopup,
+  MarkerHoverPopup,
   type MapRef
 } from '@/components/ui/map';
 import { cn } from '@/lib/cn';
@@ -28,6 +29,7 @@ type PoiMapCanvasProps = {
   selectedPoiId?: string | null;
   onMarkerClick?: (poi: POI) => void;
   renderPopup?: (poi: POI) => ReactNode;
+  renderHoverPopup?: (poi: POI) => ReactNode;
 };
 
 export default function PoiMapCanvas({
@@ -41,7 +43,8 @@ export default function PoiMapCanvas({
   showControls = true,
   selectedPoiId,
   onMarkerClick,
-  renderPopup
+  renderPopup,
+  renderHoverPopup
 }: PoiMapCanvasProps) {
   const resolvedCenter =
     center ??
@@ -92,6 +95,12 @@ export default function PoiMapCanvas({
               <MarkerPopup className='flex w-50 flex-col gap-1 p-4'>
                 {renderPopup(poi)}
               </MarkerPopup>
+            )}
+
+            {renderHoverPopup && (
+              <MarkerHoverPopup delay={300}>
+                {renderHoverPopup(poi)}
+              </MarkerHoverPopup>
             )}
           </MapMarker>
         );

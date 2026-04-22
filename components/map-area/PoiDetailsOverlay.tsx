@@ -171,6 +171,15 @@ export default function PoiDetailsOverlay({
             {poi.name || 'Location Title'}
           </TextHeading>
 
+          <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
+            <span className='border-foreground/40 inline-flex items-center gap-1 rounded-full border px-2.5 py-1'>
+              <Star className='h-3.5 w-3.5 fill-current' /> 4.6 •{' '}
+              {poi.vouchCount} reviews
+            </span>
+            <span className='text-muted-foreground'>{detailAddress}</span>
+            {copied && <span className='text-emerald-600'>Link copied</span>}
+          </div>
+
           {poi.tags && poi.tags.length > 0 && (
             <div className='mt-3 flex flex-wrap gap-2'>
               {poi.tags.map(tag => {
@@ -187,15 +196,6 @@ export default function PoiDetailsOverlay({
               })}
             </div>
           )}
-
-          <div className='mt-3 flex flex-wrap items-center gap-2 text-sm'>
-            <span className='border-foreground/40 inline-flex items-center gap-1 rounded-full border px-2.5 py-1'>
-              <Star className='h-3.5 w-3.5 fill-current' /> 4.6 •{' '}
-              {poi.vouchCount} reviews
-            </span>
-            <span className='text-muted-foreground'>{detailAddress}</span>
-            {copied && <span className='text-emerald-600'>Link copied</span>}
-          </div>
         </div>
 
         <div className='mt-3 grid grid-cols-1 gap-2 md:grid-cols-[1.3fr_0.85fr]'>

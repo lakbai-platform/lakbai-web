@@ -35,9 +35,11 @@ model POI {
   longitude        Float          
   operatingHours   String?        
   vouchCount       Int            @default(0) 
+  primaryTagId     String?
+  primaryTag       POITag?        @relation("POIPrimaryTag", fields: [primaryTagId], references: [id], onDelete: SetNull)
   
   // Relations
-  tags             POITag[]       // <--- Many-to-many relation for tags/themes
+  tags             POITag[]       @relation("POITags") // <--- Many-to-many relation for tags/themes
   address          POIAddress?
   galleries        POIGallery[]
   reviews          POIReview[]
@@ -47,6 +49,8 @@ model POI {
 
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+
+  @@index([primaryTagId])
 }
 
 model POIAddress {
@@ -71,8 +75,8 @@ model POIAddress {
 }
 
 model POITagCluster {
-  id          String   @id @default(cuid())
-  name        String   @unique // e.g. 'Eats', 'Attractions'
+  id          String   @id // e.g. 'FOOD', 'ATTRACTIONS'
+  name        String   @unique // display label
   iconName    String   // e.g. 'Utensils', 'Landmark'
 
   tags        POITag[]
@@ -81,14 +85,15 @@ model POITagCluster {
 }
 
 model POITag {
-  id          String   @id @default(cuid())
-  name        String   @unique // e.g., "Park", "Restaurant", "Hotel"
+  id          String   @id // e.g., "Park", "Restaurant", "Hotel"
+  name        String   @unique
   iconName    String?  // user suggested icon, e.g., 'Coffee'
   
   clusterId   String?
   cluster     POITagCluster? @relation(fields: [clusterId], references: [id])
   
-  pois        POI[]    // <--- Many-to-many relation back to POI
+  pois        POI[]    @relation("POITags") // <--- Many-to-many relation back to POI
+  primaryForPOIs POI[] @relation("POIPrimaryTag")
 }
 
 model POIGallery {

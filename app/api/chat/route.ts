@@ -160,7 +160,7 @@ Only output the raw JSON. Not wrapped in markdown blocks.
 
     journey = await prisma.journey.findUnique({
       where: { id: journeyId },
-      include: { itineraryItems: { include: { poi: true } } }
+      include: { itineraryItems: { include: { poi: { include: { tags: { include: { cluster: true } } } } } } }
     });
     
     chat = await prisma.chat.findUnique({
@@ -265,7 +265,7 @@ Only output the raw JSON. Not wrapped in markdown blocks.
       where: { id: journey.id },
       include: {
         itineraryItems: {
-          include: { poi: true },
+          include: { poi: { include: { tags: { include: { cluster: true } } } } },
           orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
         }
       }
@@ -302,7 +302,7 @@ export async function GET(request: Request) {
           where: { id: chat.journeyId },
           include: {
             itineraryItems: {
-              include: { poi: true },
+              include: { poi: { include: { tags: { include: { cluster: true } } } } },
               orderBy: [{ dayNumber: 'asc' }, { orderIndex: 'asc' }]
             }
           }

@@ -8,6 +8,7 @@ import type { MapRef } from '@/components/ui/map';
 import PoiMapCanvas from './PoiMapCanvas';
 import { usePois } from './use-pois';
 import PoiDetailsOverlay from './PoiDetailsOverlay';
+import PoiHoverCard from './PoiHoverCard';
 import type { POI } from './types';
 
 type MapAreaProps = {
@@ -254,6 +255,13 @@ export default function MapArea({
               </span>
             </div>
           </>
+        ) : undefined}
+        renderHoverPopup={(!isContribute || !isAddLocationMode) ? (poi) => (
+          <PoiHoverCard 
+            poi={poi} 
+            onFavorite={(id) => console.log('Favorited', id)} 
+            onAdd={(id) => handleOpenPoi(id)} 
+          />
         ) : undefined}
       />
 

@@ -598,6 +598,111 @@ function MarkerPopup({
   );
 }
 
+type MarkerHoverPopupProps = {
+  /** Popup content */
+  children: ReactNode;
+  /** Additional CSS classes for the popup container */
+  className?: string;
+  /** Time in ms before closing when mouse leaves (default: 300) */
+  delay?: number;
+} & Omit<PopupOptions, "className" | "closeButton" | "closeOnClick">;
+
+function MarkerHoverPopup({
+  children,
+  className,
+  delay = 300,
+  ...popupOptions
+}: MarkerHoverPopupProps) {
+  const { marker, map } = useMarkerContext();
+  const container = useMemo(() => document.createElement("div"), []);
+  const prevPopupOptions = useRef(popupOptions);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const popup = useMemo(() => {
+    const popupInstance = new MapLibreGL.Popup({
+      offset: 16,
+      ...popupOptions,
+      closeButton: false,
+      closeOnClick: false,
+    })
+      .setMaxWidth("none")
+      .setDOMContent(container);
+
+    return popupInstance;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!map) return;
+
+    popup.setDOMContent(container);
+
+    const handleMouseEnter = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (!popup.isOpen()) {
+        popup.setLngLat(marker.getLngLat()).addTo(map);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      timeoutRef.current = setTimeout(() => {
+        popup.remove();
+        timeoutRef.current = null;
+      }, delay);
+    };
+
+    const markerEl = marker.getElement();
+    if (markerEl) {
+      markerEl.addEventListener("mouseenter", handleMouseEnter);
+      markerEl.addEventListener("mouseleave", handleMouseLeave);
+    }
+    container.addEventListener("mouseenter", handleMouseEnter);
+    container.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (markerEl) {
+        markerEl.removeEventListener("mouseenter", handleMouseEnter);
+        markerEl.removeEventListener("mouseleave", handleMouseLeave);
+      }
+      container.removeEventListener("mouseenter", handleMouseEnter);
+      container.removeEventListener("mouseleave", handleMouseLeave);
+      popup.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, delay]);
+
+  if (popup.isOpen()) {
+    const prev = prevPopupOptions.current;
+
+    if (prev.offset !== popupOptions.offset) {
+      popup.setOffset(popupOptions.offset ?? 16);
+    }
+    if (prev.maxWidth !== popupOptions.maxWidth && popupOptions.maxWidth) {
+      popup.setMaxWidth(popupOptions.maxWidth ?? "none");
+    }
+
+    prevPopupOptions.current = popupOptions;
+  }
+
+  return createPortal(
+    <div
+      className={cn(
+        "relative rounded-xl border bg-popover p-0 overflow-hidden text-popover-foreground shadow-xl animate-in fade-in-0 zoom-in-95",
+        className
+      )}
+    >
+      {children}
+    </div>,
+    container
+  );
+}
+
 type MarkerTooltipProps = {
   /** Tooltip content */
   children: ReactNode;
@@ -1475,6 +1580,7 @@ export {
   MarkerContent,
   MarkerPopup,
   MarkerTooltip,
+  MarkerHoverPopup,
   MarkerLabel,
   MapPopup,
   MapControls,
