@@ -25,6 +25,7 @@ type PoiMapCanvasProps = {
   mapClassName?: string;
   controlsClassName?: string;
   markerContentClassName?: string;
+  markerCircleClassName?: string;
   showControls?: boolean;
   selectedPoiId?: string | null;
   onMarkerClick?: (poi: POI) => void;
@@ -40,6 +41,7 @@ export default function PoiMapCanvas({
   mapClassName,
   controlsClassName,
   markerContentClassName,
+  markerCircleClassName,
   showControls = true,
   selectedPoiId,
   onMarkerClick,
@@ -86,8 +88,8 @@ export default function PoiMapCanvas({
               <div
                 className={cn(
                   'relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-lg transition-transform hover:scale-110',
-                  color,
-                  isSelected && 'ring-primary ring-2 ring-offset-1'
+                  markerCircleClassName ?? color,
+                  isSelected && 'ring-primary-500 ring-2 ring-offset-1'
                 )}
               >
                 <Icon className='h-4 w-4 text-white' />

@@ -389,7 +389,7 @@ export default function PoiDetailsOverlay({
                 <MapPinned className='h-4 w-4' /> Location
               </TextBody>
               <TextBody className='text-foreground/80'>
-                {`Lat ${poi.latitude.toFixed(5)}, Lng ${poi.longitude.toFixed(5)}`}
+                {detailAddress}
               </TextBody>
               <div className='h-64 overflow-hidden rounded-xl'>
                 <PoiMapCanvas
@@ -397,6 +397,7 @@ export default function PoiDetailsOverlay({
                   center={focusedCenter}
                   zoom={14}
                   selectedPoiId={poi.id}
+                  markerCircleClassName='bg-primary-500 border-primary-500'
                 />
               </div>
             </div>
@@ -460,15 +461,14 @@ export default function PoiDetailsOverlay({
             <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
               <MapPinned className='h-4 w-4' /> Location
             </TextBody>
-            <TextBody className='text-foreground/80'>
-              {`Lat ${poi.latitude.toFixed(5)}, Lng ${poi.longitude.toFixed(5)}`}
-            </TextBody>
+            <TextBody className='text-foreground/80'>{detailAddress}</TextBody>
             <div className='h-72 overflow-hidden rounded-xl'>
               <PoiMapCanvas
                 pois={[poi]}
                 center={focusedCenter}
                 zoom={15}
                 selectedPoiId={poi.id}
+                markerCircleClassName='bg-primary-500 border-primary-500'
               />
             </div>
           </div>
