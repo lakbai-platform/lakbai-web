@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { Sidebar } from './_components/Sidebar';
 import GlobalChatbarWrapper from './_components/GlobalChatbarWrapper';
 import { prisma } from '@/lib/prisma';
+import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
   title: 'Lakbai App',
@@ -13,12 +15,24 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Secondary session guard (middleware is primary)
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/');
+  }
+
   const chats = await prisma.chat.findMany({
-    orderBy: { updatedAt: 'desc' }
+    where: { journey: { userId: user.id } },
+    orderBy: { updatedAt: 'desc' },
   });
-  
+
   const journeys = await prisma.journey.findMany({
-    orderBy: { createdAt: 'desc' }
+    where: { userId: user.id },
+    orderBy: { createdAt: 'desc' },
   });
 
   return (

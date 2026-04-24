@@ -1,0 +1,416 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Modal } from '@/app/(marketing)/_components/UserAuthModal';
+import { createClient } from '@/lib/supabase/client';
+import { TextBody } from '@/components/text';
+
+type AuthView = 'login' | 'signup';
+
+// ---------------------------------------------------------------------------
+// Shared sub-components
+// ---------------------------------------------------------------------------
+
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  placeholder = 'Enter your password',
+  label,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  label: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="space-y-2">
+      <TextBody className="font-semibold text-slate-600">{label}</TextBody>
+      <div className="relative">
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete={id === 'signup-password' ? 'new-password' : 'current-password'}
+          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 pr-12 transition-all outline-none focus:bg-white focus:ring-2"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+          tabIndex={-1}
+          aria-label={show ? 'Hide password' : 'Show password'}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Login Form
+// ---------------------------------------------------------------------------
+
+function LoginForm({
+  onSwitchToSignUp,
+  onClose,
+}: {
+  onSwitchToSignUp: () => void;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      // Ensure user row exists in Prisma
+      await fetch('/api/auth/sync-user', { method: 'POST' });
+
+      onClose();
+      router.push('/chat');
+      router.refresh();
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {error && <ErrorBanner message={error} />}
+
+      <div className="space-y-2">
+        <TextBody className="font-semibold text-slate-600">Email Address</TextBody>
+        <input
+          id="login-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="name@example.com"
+          autoComplete="email"
+          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+        />
+      </div>
+
+      <PasswordInput
+        id="login-password"
+        label="Password"
+        value={password}
+        onChange={setPassword}
+      />
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-primary-500 shadow-primary-500/30 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-bold text-white shadow-lg transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <>Sign In <ArrowRight size={16} /></>
+        )}
+      </button>
+
+      <div className="text-center">
+        <TextBody className="text-slate-500">
+          New to Lakbai?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToSignUp}
+            className="text-primary-500 font-bold hover:underline"
+          >
+            Create an account
+          </button>
+        </TextBody>
+      </div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sign-Up Form
+// ---------------------------------------------------------------------------
+
+function SignUpForm({
+  onSwitchToLogin,
+  onClose,
+}: {
+  onSwitchToLogin: () => void;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } },
+      });
+
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      // If email confirmation is required, session will be null
+      if (!data.session) {
+        setError(
+          'Please check your email to confirm your account, then sign in.'
+        );
+        return;
+      }
+
+      // Mirror user into Prisma
+      await fetch('/api/auth/sync-user', { method: 'POST' });
+
+      onClose();
+      router.push('/chat');
+      router.refresh();
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {error && <ErrorBanner message={error} />}
+
+      <div className="space-y-2">
+        <TextBody className="font-semibold text-slate-600">Full Name</TextBody>
+        <input
+          id="signup-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Christian Morga"
+          autoComplete="name"
+          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <TextBody className="font-semibold text-slate-600">Email</TextBody>
+        <input
+          id="signup-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="name@example.com"
+          autoComplete="email"
+          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+        />
+      </div>
+
+      <PasswordInput
+        id="signup-password"
+        label="Password"
+        value={password}
+        onChange={setPassword}
+        placeholder="At least 6 characters"
+      />
+
+      <PasswordInput
+        id="signup-confirm-password"
+        label="Confirm Password"
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+        placeholder="Re-enter your password"
+      />
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-primary-500 shadow-primary-500/30 flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-bold text-white shadow-lg transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <>Create Account <ArrowRight size={16} /></>
+        )}
+      </button>
+
+      <div className="text-center">
+        <TextBody className="text-slate-500">
+          Already have an account?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToLogin}
+            className="text-primary-500 font-bold hover:underline"
+          >
+            Sign in
+          </button>
+        </TextBody>
+      </div>
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Context + Provider
+// ---------------------------------------------------------------------------
+
+/**
+ * AuthProvider holds the shared modal state and renders the modals once.
+ * NavAuthButtons and HeroCTA are presentational — they trigger the shared state
+ * via props passed from this provider through the children render pattern.
+ */
+interface AuthContextValue {
+  openLogin: () => void;
+  openSignUp: () => void;
+}
+
+const AuthContext = React.createContext<AuthContextValue>({
+  openLogin: () => {},
+  openSignUp: () => {},
+});
+
+// ---------------------------------------------------------------------------
+// Public exports used in LandingPage
+// ---------------------------------------------------------------------------
+
+/**
+ * Wraps the entire landing page to provide shared auth modal state.
+ * Place this around the layout that contains both NavAuthButtons and HeroCTA.
+ */
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [view, setView] = useState<AuthView | null>(null);
+  const closeModal = () => setView(null);
+
+  return (
+    <AuthContext.Provider
+      value={{ openLogin: () => setView('login'), openSignUp: () => setView('signup') }}
+    >
+      {children}
+
+      {/* Login Modal */}
+      <Modal
+        isOpen={view === 'login'}
+        onClose={closeModal}
+        title="Welcome Back"
+        subtitle="Sign in to continue your journey"
+      >
+        <LoginForm
+          onSwitchToSignUp={() => setView('signup')}
+          onClose={closeModal}
+        />
+      </Modal>
+
+      {/* Sign Up Modal */}
+      <Modal
+        isOpen={view === 'signup'}
+        onClose={closeModal}
+        title="Join Lakbai"
+        subtitle="Create your free account"
+      >
+        <SignUpForm
+          onSwitchToLogin={() => setView('login')}
+          onClose={closeModal}
+        />
+      </Modal>
+    </AuthContext.Provider>
+  );
+}
+
+/** Nav Login + Sign Up buttons */
+export function NavAuthButtons() {
+  const { openLogin, openSignUp } = React.useContext(AuthContext);
+  return (
+    <div className="flex items-center gap-2 md:gap-4">
+      <button
+        id="nav-login-btn"
+        onClick={openLogin}
+        className="hover:text-primary-500 text-text-main px-3 py-2 text-sm font-semibold transition-colors md:px-4"
+      >
+        Login
+      </button>
+      <button
+        id="nav-signup-btn"
+        onClick={openSignUp}
+        className="bg-primary-500 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-lg active:scale-95 md:px-6"
+      >
+        Sign Up
+      </button>
+    </div>
+  );
+}
+
+/** Hero section CTA button */
+export function HeroCTA() {
+  const { openSignUp } = React.useContext(AuthContext);
+  return (
+    <button
+      id="hero-cta-btn"
+      onClick={openSignUp}
+      className="group bg-primary-500 text-background flex items-center gap-3 rounded-full px-10 py-5 text-lg font-semibold hover:cursor-pointer hover:opacity-90"
+    >
+      Start your journey
+    </button>
+  );
+}
