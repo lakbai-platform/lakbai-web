@@ -242,42 +242,6 @@ export default function MapArea({
         markerContentClassName={
           isContribute && isAddLocationMode ? 'cursor-default' : ''
         }
-        renderPopup={
-          isContribute
-            ? poi => (
-                <>
-                  <h3 className='text-foreground text-sm leading-tight font-semibold'>
-                    {poi.name}
-                  </h3>
-                  <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-                    {poi.description}
-                  </p>
-
-                  <div className='mt-2 flex flex-wrap gap-1'>
-                    {poi.tags?.map(tag => {
-                      const { icon: TagIcon, color } = getTagVisual(tag);
-
-                      return (
-                        <span
-                          key={tag.id}
-                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${color}`}
-                        >
-                          <TagIcon className='h-2.5 w-2.5' />
-                          {getTagLabel(tag)}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  <div className='border-border/50 mt-2 flex items-center gap-2 border-t pt-2 text-xs'>
-                    <span className='text-primary font-medium'>
-                      👍 {poi.vouchCount} Vouches
-                    </span>
-                  </div>
-                </>
-              )
-            : undefined
-        }
         renderHoverPopup={
           !isContribute || !isAddLocationMode
             ? poi => (
