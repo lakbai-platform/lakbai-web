@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import { TextSubheading } from '@/components/text';
 import {
@@ -15,7 +15,8 @@ import {
   Bell,
   UserCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -30,8 +31,17 @@ export function Sidebar() {
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
   const profileMenuContentRef = useRef<HTMLDivElement>(null);
 
+  const router = useRouter();
+
   const closeChatPopup = () => {
     window.dispatchEvent(new CustomEvent('close-chat-popup'));
+  };
+
+  const handleLogout = async () => {
+    setIsProfileMenuOpen(false);
+    await fetch('/api/auth/sign-out', { method: 'POST' });
+    router.push('/');
+    router.refresh();
   };
 
   useEffect(() => {
@@ -430,6 +440,18 @@ export function Sidebar() {
                     className='hover:bg-surface-light text-text-main block w-full rounded-md px-2 py-2 text-left text-sm transition-colors'
                   >
                     Terms of Service
+                  </button>
+                </div>
+
+                {/* Logout — separated by a top border */}
+                <div className='border-border border-t'>
+                  <button
+                    type='button'
+                    onClick={handleLogout}
+                    className='hover:bg-surface-light flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-red-500 transition-colors hover:text-red-600'
+                  >
+                    <LogOut size={15} className='shrink-0' />
+                    Log out
                   </button>
                 </div>
               </div>
