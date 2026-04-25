@@ -189,46 +189,6 @@ export default function MapArea({
           </button>
         </div>
       )}
-
-      {isContribute && (
-        <>
-          <div className='absolute top-2 left-2 z-30'>
-            <button
-              type='button'
-              onClick={() => setIsAddLocationMode(prev => !prev)}
-              aria-pressed={isAddLocationMode}
-              aria-label='Add new point'
-              className={`border-border bg-background/95 text-text-main hover:bg-surface-light relative inline-flex h-9 cursor-default items-center overflow-hidden rounded-full border shadow-sm backdrop-blur-sm transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                isAddLocationMode ? 'w-9' : 'w-37'
-              }`}
-            >
-              <span className='bg-primary-500 absolute top-1/2 left-1 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-white'>
-                <MapPinPlusInside className='h-4 w-4' />
-              </span>
-              <span
-                className={`absolute top-1/2 left-10 -translate-y-1/2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-out ${
-                  isAddLocationMode
-                    ? 'translate-x-1 opacity-0'
-                    : 'translate-x-0 opacity-100'
-                }`}
-              >
-                Add a location
-              </span>
-            </button>
-          </div>
-
-          <div className='absolute top-2 right-2 z-30'>
-            <button
-              type='button'
-              aria-label='Preview map visibility'
-              className='border-border bg-background/95 text-text-main hover:bg-surface-light flex h-8 w-8 cursor-default items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition'
-            >
-              <Eye className='h-4 w-4' />
-            </button>
-          </div>
-        </>
-      )}
-
       <PoiMapCanvas
         pois={combinedPois}
         mapRef={isContribute ? mapRef : undefined}
