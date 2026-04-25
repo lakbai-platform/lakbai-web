@@ -70,6 +70,9 @@ type PoiDetailsOverlayProps = {
   onClose: () => void;
   onCopyShareUrl: () => void;
   portalContainer?: HTMLElement | null;
+  /** When true the collapsed overlay renders as a right-side panel instead of
+   * filling its parent. Use this when MapArea occupies the full viewport. */
+  panelMode?: boolean;
 };
 
 export default function PoiDetailsOverlay({
@@ -77,7 +80,8 @@ export default function PoiDetailsOverlay({
   copied,
   onClose,
   onCopyShareUrl,
-  portalContainer
+  portalContainer,
+  panelMode = false
 }: PoiDetailsOverlayProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('description');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -126,7 +130,14 @@ export default function PoiDetailsOverlay({
   const focusedCenter: [number, number] = [poi.longitude, poi.latitude];
 
   const overlayContent = (
-    <div className='bg-background/95 absolute inset-0 z-40 overflow-y-auto backdrop-blur-sm'>
+    <div
+      className={cn(
+        'bg-background/95 absolute z-40 overflow-y-auto backdrop-blur-sm transition-all duration-300',
+        panelMode && !isDetailsExpanded
+          ? 'inset-y-0 right-0 w-1/2 shadow-2xl'
+          : 'inset-0'
+      )}
+    >
       <div
         className={cn(
           'mx-auto flex w-full flex-col pt-4 pb-12 sm:pt-6',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { cn } from '@/lib/cn';
 import Chatbox from './_components/chatbox';
@@ -17,6 +17,7 @@ export default function ChatClientLayout({
   const chatId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Automatically manage redirect if on /chat randomly
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function ChatClientLayout({
   };
 
   return (
-    <div className='flex h-full w-full overflow-hidden'>
+    <div ref={containerRef} className='relative flex h-full w-full overflow-hidden'>
       {/* LEFT: Chatbox (Full fixed width or percentage) */}
       <div
         className={cn(
@@ -74,6 +75,7 @@ export default function ChatClientLayout({
         <MapArea
           isExpanded={isMapExpanded}
           onToggleExpand={() => setIsMapExpanded(prev => !prev)}
+          overlayContainerRef={containerRef}
         />
       </div>
     </div>

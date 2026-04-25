@@ -262,6 +262,7 @@ export default function MapArea({
           onClose={handleClosePoi}
           onCopyShareUrl={handleCopyShareUrl}
           portalContainer={overlayContainerRef?.current}
+          panelMode={isContribute}
         />
       )}
     </div>
