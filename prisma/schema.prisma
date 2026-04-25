@@ -97,7 +97,7 @@ model POITag {
 }
 
 model POIGallery {
-  id        String   @id @default(cuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   poiId     String
   poi       POI      @relation(fields: [poiId], references: [id], onDelete: Cascade)
   imageUrl  String   
