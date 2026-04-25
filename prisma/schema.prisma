@@ -13,6 +13,17 @@ datasource db {
   provider  = "postgresql"
 }
 
+enum ContributionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ContributionType {
+  CREATE
+  UPDATE
+}
+
 model User {
   id             String         @id
   email          String         @unique
@@ -23,6 +34,7 @@ model User {
   vouches        POIVouch[]
   favorites      POIFavorite[]
   journeys       Journey[]
+  contributions  Contribution[]
 
   createdAt      DateTime       @default(now())
 }
@@ -38,7 +50,7 @@ model POI {
   primaryTag       POITag?        @relation("POIPrimaryTag", fields: [primaryTagId], references: [id], onDelete: SetNull)
   
   // Relations
-  tags             POITag[]       @relation("POITags") // <--- Many-to-many relation for tags/themes
+  tags             POITag[]       @relation("POITags")
   address          POIAddress?
   galleries        POIGallery[]
   operatingHours   OperatingHours[]
@@ -46,6 +58,7 @@ model POI {
   vouches          POIVouch[]
   favorites        POIFavorite[]
   itineraryItems   ItineraryItem[]
+  contributions    Contribution[]
 
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
@@ -226,4 +239,30 @@ model ItineraryItem {
   updatedAt       DateTime       @updatedAt
   
   @@unique([journeyId, poiId, dayNumber]) 
+}
+
+model Contribution {
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type         ContributionType
+  status       ContributionStatus @default(PENDING)
+
+  /// Full POI payload (name, description, coords, tags, hours, address)
+  proposedData Json
+
+  /// Only set when type === UPDATE — links to the POI being edited
+  poiId        String?
+  poi          POI?               @relation(fields: [poiId], references: [id], onDelete: SetNull)
+
+  /// Optional rejection/approval notes from the admin
+  adminNotes   String?            @db.Text
+  reviewedAt   DateTime?
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([status])
+  @@index([userId])
 }
