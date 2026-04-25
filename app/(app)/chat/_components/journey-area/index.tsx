@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { 
   X, 
   Undo2, 
@@ -12,25 +13,103 @@ import {
 } from 'lucide-react';
 import { TextHeading, TextBody } from '@/components/text';
 
+interface JourneyAreaPOI {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface JourneyAreaItineraryItem {
+  id: string;
+  journeyId: string;
+  poiId: string;
+  dayNumber: number | null;
+  orderIndex: number;
+  startTime: string | null;
+  endTime: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  poi?: JourneyAreaPOI | null;
+}
+
+interface JourneyAreaJourney {
+  id: string;
+  title: string;
+  destination: string | null;
+  isFlexibleDates: boolean;
+  startDate: string | null;
+  companions: string | null;
+  budget: number | null;
+  itineraryItems: JourneyAreaItineraryItem[];
+}
+
 type JourneyAreaProps = {
   open: boolean;
   onClose: () => void;
-  journey?: any;
+  journey?: JourneyAreaJourney | null;
 };
 
 export default function JourneyArea({ open, onClose, journey }: JourneyAreaProps) {
   if (!open) return null;
-  
-  // Group itinerary items by day Number
-  const itineraryGroups = journey?.itineraryItems?.reduce((acc: any, item: any) => {
-    const day = item.dayNumber || 1;
-    if (!acc[day]) acc[day] = [];
-    acc[day].push(item);
-    return acc;
-  }, {}) || {};
 
-  const days = Object.keys(itineraryGroups).sort((a,b) => parseInt(a) - parseInt(b));
-  const totalItems = journey?.itineraryItems?.length || 0;
+  const itineraryItems = journey?.itineraryItems ?? [];
+
+  const groupedItinerary = useMemo(() => {
+    const basecamp: JourneyAreaItineraryItem[] = [];
+    const scheduledMap: Record<number, JourneyAreaItineraryItem[]> = {};
+
+    for (const item of itineraryItems) {
+      if (item.dayNumber === null) {
+        basecamp.push(item);
+        continue;
+      }
+
+      if (!scheduledMap[item.dayNumber]) {
+        scheduledMap[item.dayNumber] = [];
+      }
+
+      scheduledMap[item.dayNumber].push(item);
+    }
+
+    const sortByTimeThenOrder = (left: JourneyAreaItineraryItem, right: JourneyAreaItineraryItem) => {
+      const leftTime = left.startTime ?? '';
+      const rightTime = right.startTime ?? '';
+      const leftHasTime = leftTime.length > 0;
+      const rightHasTime = rightTime.length > 0;
+
+      if (leftHasTime && rightHasTime) {
+        if (leftTime < rightTime) return -1;
+        if (leftTime > rightTime) return 1;
+      } else if (leftHasTime) {
+        return -1;
+      } else if (rightHasTime) {
+        return 1;
+      }
+
+      return left.orderIndex - right.orderIndex;
+    };
+
+    basecamp.sort(sortByTimeThenOrder);
+
+    const sortedDayNumbers = Object.keys(scheduledMap)
+      .map(Number)
+      .sort((left, right) => left - right);
+
+    const scheduledDays: Record<number, JourneyAreaItineraryItem[]> = {};
+    for (const dayNumber of sortedDayNumbers) {
+      scheduledDays[dayNumber] = [...scheduledMap[dayNumber]].sort(sortByTimeThenOrder);
+    }
+
+    return {
+      basecamp,
+      scheduledDays,
+      dayNumbers: sortedDayNumbers,
+    };
+  }, [itineraryItems]);
+
+  const totalItems = itineraryItems.length;
+  const totalBasecampItems = groupedItinerary.basecamp.length;
 
   return (
     <div className='absolute inset-0 z-10 flex flex-col bg-background'>
@@ -102,7 +181,7 @@ export default function JourneyArea({ open, onClose, journey }: JourneyAreaProps
               </div>
               <TextBody className='font-bold text-[15px] text-foreground'>Basecamp</TextBody>
               <TextBody className='ml-3 pt-[2px] text-xs font-medium text-text-muted'>
-                0 items
+                {totalBasecampItems} item{totalBasecampItems !== 1 ? 's' : ''}
               </TextBody>
             </div>
             <div className='flex items-center gap-2'>
@@ -117,11 +196,27 @@ export default function JourneyArea({ open, onClose, journey }: JourneyAreaProps
           </div>
 
           {/* Add Item Card */}
-          <div className='ml-7 flex h-[100px] w-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-[#DFDFDF] transition-colors hover:bg-[#D0D0D0]'>
-            <div className='rounded-full border border-text-main p-0.5'>
-               <PlusCircle size={18} strokeWidth={1.5} className='text-text-main' />
+          <div className='ml-7 flex flex-col gap-3 pb-2'>
+            {groupedItinerary.basecamp.map(item => (
+              <div key={item.id} className='rounded-xl border border-border bg-surface p-3 flex gap-3 items-start'>
+                <div className='bg-primary-100 text-primary-800 p-2 rounded-full shrink-0 mt-0.5'>
+                  <MapPin size={16} />
+                </div>
+                <div className='flex flex-col'>
+                  <span className='text-sm font-bold'>{item.poi?.name ?? 'Unknown POI'}</span>
+                  <span className='text-xs text-text-muted mt-1'>
+                    {item.startTime ? `${item.startTime}${item.endTime ? ` - ${item.endTime}` : ''}` : `Order #${item.orderIndex + 1}`}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            <div className='flex h-[100px] w-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl bg-[#DFDFDF] transition-colors hover:bg-[#D0D0D0]'>
+              <div className='rounded-full border border-text-main p-0.5'>
+                <PlusCircle size={18} strokeWidth={1.5} className='text-text-main' />
+              </div>
+              <span className='text-[13px] font-bold text-text-main'>Add</span>
             </div>
-            <span className='text-[13px] font-bold text-text-main'>Add</span>
           </div>
         </div>
 
@@ -145,30 +240,34 @@ export default function JourneyArea({ open, onClose, journey }: JourneyAreaProps
             </div>
           </div>
 
-          {days.length === 0 ? (
+          {groupedItinerary.dayNumbers.length === 0 ? (
             <div className='pl-7 text-sm text-text-muted'>
               No itinerary items yet. Ask AI to generate one or add manually!
             </div>
           ) : (
-            days.map((day) => (
-              <div key={day} className='mb-6'>
+            groupedItinerary.dayNumbers.map(dayNumber => (
+              <div key={dayNumber} className='mb-6'>
                 <div className='flex cursor-pointer items-center mb-3'>
                   <div className='flex w-7 items-center justify-start'>
                     <ChevronDown size={20} strokeWidth={2} className='text-foreground' />
                   </div>
-                  <TextBody className='font-bold text-[15px] text-foreground'>Day {day}</TextBody>
+                  <TextBody className='font-bold text-[15px] text-foreground'>Day {dayNumber}</TextBody>
                 </div>
                 
                 {/* Items for this day */}
                 <div className='ml-7 flex flex-col gap-3 pb-2'>
-                  {itineraryGroups[day].map((item: any) => (
+                  {groupedItinerary.scheduledDays[dayNumber].map(item => (
                     <div key={item.id} className='rounded-xl border border-border bg-surface p-3 flex gap-3 items-start'>
                       <div className='bg-primary-100 text-primary-800 p-2 rounded-full shrink-0 mt-0.5'>
                         <MapPin size={16} />
                       </div>
                       <div className='flex flex-col'>
-                         <span className='text-sm font-bold'>{item.poi?.name}</span>
-                         <span className='text-xs text-text-muted mt-1'>{item.poi?.description?.substring(0, 80)}...</span>
+                        <span className='text-sm font-bold'>{item.poi?.name ?? 'Unknown POI'}</span>
+                        <span className='text-xs text-text-muted mt-1'>
+                          {item.startTime
+                            ? `${item.startTime}${item.endTime ? ` - ${item.endTime}` : ''}`
+                            : `Order #${item.orderIndex + 1}`}
+                        </span>
                       </div>
                     </div>
                   ))}

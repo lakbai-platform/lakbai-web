@@ -2,12 +2,16 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ArrowRight, ChevronLeft } from 'lucide-react';
 import { Modal } from '@/app/(marketing)/_components/UserAuthModal';
 import { createClient } from '@/lib/supabase/client';
 import { TextBody } from '@/components/text';
+import { Toast } from '@/app/(app)/_components/Notificaiton';
 
 type AuthView = 'login' | 'signup';
+type ToastType = 'success' | 'error';
+type SignUpStep = 'identity' | 'password' | 'username';
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ---------------------------------------------------------------------------
 // Shared sub-components
@@ -54,62 +58,62 @@ function PasswordInput({
   );
 }
 
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
-      <AlertCircle size={16} className="mt-0.5 shrink-0" />
-      <span>{message}</span>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Login Form
-// ---------------------------------------------------------------------------
-
 function LoginForm({
   onSwitchToSignUp,
   onClose,
+  onNotify,
 }: {
   onSwitchToSignUp: () => void;
   onClose: () => void;
+  onNotify: (message: string, type?: ToastType) => void;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (!email || !password) {
-      setError('Please fill in all fields.');
+    if (!identifier.trim() || !password.trim()) {
+      onNotify('Please fill in all fields.', 'error');
       return;
     }
 
     setLoading(true);
     try {
+      const resolveRes = await fetch('/api/auth/resolve-identifier', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: identifier.trim() }),
+      });
+      const resolveData = await resolveRes.json();
+
+      if (!resolveRes.ok) {
+        onNotify(resolveData.error ?? 'Invalid username or email.', 'error');
+        return;
+      }
+
       const supabase = createClient();
       const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: resolveData.email,
         password,
       });
 
       if (authError) {
-        setError(authError.message);
+        onNotify(authError.message, 'error');
         return;
       }
 
       // Ensure user row exists in Prisma
       await fetch('/api/auth/sync-user', { method: 'POST' });
 
+      onNotify('Welcome back!', 'success');
       onClose();
       router.push('/chat');
       router.refresh();
     } catch {
-      setError('Something went wrong. Please try again.');
+      onNotify('Something went wrong. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -117,17 +121,15 @@ function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-      {error && <ErrorBanner message={error} />}
-
       <div className="space-y-2">
-        <TextBody className="font-semibold text-slate-600">Email Address</TextBody>
+        <TextBody className="font-semibold text-slate-600">Username or Email</TextBody>
         <input
-          id="login-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@example.com"
-          autoComplete="email"
+          id="login-identifier"
+          type="text"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
+          placeholder="@lakbai-user or name@example.com"
+          autoComplete="username"
           className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
         />
       </div>
@@ -174,65 +176,136 @@ function LoginForm({
 function SignUpForm({
   onSwitchToLogin,
   onClose,
+  onNotify,
 }: {
   onSwitchToLogin: () => void;
   onClose: () => void;
+  onNotify: (message: string, type?: ToastType) => void;
 }) {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const [step, setStep] = useState<SignUpStep>('identity');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleNextStep = async () => {
+    if (step === 'identity') {
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        onNotify('Please fill in first name, last name, and email.', 'error');
+        return;
+      }
+      if (!emailRegex.test(email.trim())) {
+        onNotify('Please enter a valid email address.', 'error');
+        return;
+      }
+      setStep('password');
+      return;
+    }
+
+    if (step === 'password') {
+      if (!password || !confirmPassword) {
+        onNotify('Please fill in password and confirm password.', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        onNotify('Password must be at least 6 characters.', 'error');
+        return;
+      }
+      if (password !== confirmPassword) {
+        onNotify("Passwords don't match.", 'error');
+        return;
+      }
+      setStep('username');
+    }
+  };
+
+  const handleBackStep = () => {
+    if (step === 'username') {
+      setStep('password');
+      return;
+    }
+    if (step === 'password') {
+      setStep('identity');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields.');
+    if (step !== 'username') {
+      await handleNextStep();
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords don't match.");
+
+    const rawUsername = username.trim().replace(/^@+/, '');
+    if (!rawUsername) {
+      onNotify('Username is required.', 'error');
       return;
     }
 
     setLoading(true);
     try {
+      const usernameCheckRes = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: rawUsername }),
+      });
+      const usernameCheckData = await usernameCheckRes.json();
+      if (!usernameCheckRes.ok) {
+        onNotify(usernameCheckData.error ?? 'Invalid username.', 'error');
+        return;
+      }
+      if (!usernameCheckData.available) {
+        onNotify('Username is already taken.', 'error');
+        return;
+      }
+
       const supabase = createClient();
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const { data, error: authError } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
-        options: { data: { full_name: name } },
+        options: {
+          data: {
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
+            full_name: fullName,
+            username: usernameCheckData.username,
+          },
+        },
       });
 
       if (authError) {
-        setError(authError.message);
+        onNotify(authError.message, 'error');
         return;
       }
 
-      // If email confirmation is required, session will be null
-      if (!data.session) {
-        setError(
-          'Please check your email to confirm your account, then sign in.'
-        );
+      if (data.session) {
+        await fetch('/api/auth/sync-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            username: usernameCheckData.username,
+          }),
+        });
+
+        onNotify('Account created successfully!', 'success');
+        onClose();
+        router.push('/chat');
+        router.refresh();
         return;
       }
 
-      // Mirror user into Prisma
-      await fetch('/api/auth/sync-user', { method: 'POST' });
-
-      onClose();
-      router.push('/chat');
-      router.refresh();
+      onNotify('Please check your email to confirm your account, then sign in.', 'success');
+      onSwitchToLogin();
     } catch {
-      setError('Something went wrong. Please try again.');
+      onNotify('Something went wrong. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -240,49 +313,105 @@ function SignUpForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-      {error && <ErrorBanner message={error} />}
-
-      <div className="space-y-2">
-        <TextBody className="font-semibold text-slate-600">Full Name</TextBody>
-        <input
-          id="signup-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Christian Morga"
-          autoComplete="name"
-          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
-        />
+      <div className="flex items-center justify-between">
+        <TextBody className="text-sm font-semibold text-slate-500">
+          Step {step === 'identity' ? 1 : step === 'password' ? 2 : 3} of 3
+        </TextBody>
+        {step !== 'identity' && (
+          <button
+            type="button"
+            onClick={handleBackStep}
+            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+          >
+            <ChevronLeft size={16} /> Back
+          </button>
+        )}
       </div>
 
-      <div className="space-y-2">
-        <TextBody className="font-semibold text-slate-600">Email</TextBody>
-        <input
-          id="signup-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="name@example.com"
-          autoComplete="email"
-          className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
-        />
-      </div>
+      {step === 'identity' && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <TextBody className="font-semibold text-slate-600">First Name</TextBody>
+              <input
+                id="signup-first-name"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Christian"
+                autoComplete="given-name"
+                className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <TextBody className="font-semibold text-slate-600">Last Name</TextBody>
+              <input
+                id="signup-last-name"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Morga"
+                autoComplete="family-name"
+                className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+              />
+            </div>
+          </div>
 
-      <PasswordInput
-        id="signup-password"
-        label="Password"
-        value={password}
-        onChange={setPassword}
-        placeholder="At least 6 characters"
-      />
+          <div className="space-y-2">
+            <TextBody className="font-semibold text-slate-600">Email</TextBody>
+            <input
+              id="signup-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              autoComplete="email"
+              className="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all outline-none focus:bg-white focus:ring-2"
+            />
+          </div>
+        </div>
+      )}
 
-      <PasswordInput
-        id="signup-confirm-password"
-        label="Confirm Password"
-        value={confirmPassword}
-        onChange={setConfirmPassword}
-        placeholder="Re-enter your password"
-      />
+      {step === 'password' && (
+        <div className="space-y-5">
+          <PasswordInput
+            id="signup-password"
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            placeholder="At least 6 characters"
+          />
+
+          <PasswordInput
+            id="signup-confirm-password"
+            label="Confirm Password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            placeholder="Re-enter your password"
+          />
+        </div>
+      )}
+
+      {step === 'username' && (
+        <div className="space-y-2">
+          <TextBody className="font-semibold text-slate-600">Username</TextBody>
+          <div className="focus-within:border-primary-500 focus-within:ring-primary-500/20 flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 transition-all focus-within:ring-2">
+            <span className="text-slate-500">@</span>
+            <input
+              id="signup-username"
+              type="text"
+              value={username.replace(/^@+/, '')}
+              onChange={(e) => setUsername(e.target.value.replace(/^@+/, ''))}
+              placeholder="lakbai-user"
+              autoComplete="username"
+              className="w-full bg-transparent p-4 pl-2 outline-none"
+            />
+          </div>
+          <TextBody className="text-xs text-slate-500">
+            3-30 characters. Letters, numbers, dot, underscore, and hyphen only.
+          </TextBody>
+        </div>
+      )}
 
       <button
         type="submit"
@@ -292,7 +421,7 @@ function SignUpForm({
         {loading ? (
           <Loader2 size={18} className="animate-spin" />
         ) : (
-          <>Create Account <ArrowRight size={16} /></>
+          <>{step === 'username' ? 'Create Account' : 'Continue'} <ArrowRight size={16} /></>
         )}
       </button>
 
@@ -341,7 +470,16 @@ const AuthContext = React.createContext<AuthContextValue>({
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<AuthView | null>(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<ToastType>('success');
+  const [isToastOpen, setIsToastOpen] = useState(false);
   const closeModal = () => setView(null);
+  const handleNotify = (message: string, type: ToastType = 'error') => {
+    setToastMessage(message);
+    setToastType(type);
+    setIsToastOpen(true);
+    setTimeout(() => setIsToastOpen(false), 3200);
+  };
 
   return (
     <AuthContext.Provider
@@ -359,6 +497,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <LoginForm
           onSwitchToSignUp={() => setView('signup')}
           onClose={closeModal}
+          onNotify={handleNotify}
         />
       </Modal>
 
@@ -372,8 +511,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <SignUpForm
           onSwitchToLogin={() => setView('login')}
           onClose={closeModal}
+          onNotify={handleNotify}
         />
       </Modal>
+
+      <Toast
+        isOpen={isToastOpen}
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setIsToastOpen(false)}
+      />
     </AuthContext.Provider>
   );
 }

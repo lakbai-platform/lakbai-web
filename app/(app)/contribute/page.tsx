@@ -1,113 +1,334 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import {
-  MapPin,
-  MapPinPlusInside,
-  X,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/cn';
-import { TextBody, TextHeading } from '@/components/text';
+import { ChangeEvent, useMemo, useRef, useState } from 'react';
 import ContributeMapArea, { type PickedLocation } from '@/components/map-area/ContributeMapArea';
 import { usePois } from '@/components/map-area/use-pois';
 import type { MapRef } from '@/components/ui/map';
 import type { POI } from '@/components/map-area/types';
+import {
+  ContributionSidebar,
+  type ContributionAddressForm,
+  type ContributionContactForm,
+  type ContributionFormState,
+  type ContributionGalleryUpload,
+  type ContributionOperatingHourForm,
+  type SubmitStatus,
+} from '@/components/contribute/ContributionSidebar';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+const dayIndexes = [0, 1, 2, 3, 4, 5, 6] as const;
 
-type SubmitStatus = 'idle' | 'loading' | 'success' | 'error';
+function createInitialOperatingHours(): ContributionOperatingHourForm[] {
+  return dayIndexes.map(dayOfWeek => ({
+    dayOfWeek,
+    openTime: '',
+    closeTime: '',
+    isClosed: false,
+    is24Hours: false,
+  }));
+}
 
-type FormState = {
-  name: string;
-  description: string;
-  street: string;
-  barangay: string;
-  cityMunicipality: string;
-  province: string;
-};
+function createInitialAddress(): ContributionAddressForm {
+  return {
+    blockLotNumber: '',
+    houseNumber: '',
+    purok: '',
+    street: '',
+    subdivisionName: '',
+    barangay: '',
+    cityMunicipality: '',
+    province: '',
+    postalCode: '',
+  };
+}
 
-const INITIAL_FORM: FormState = {
-  name: '',
-  description: '',
-  street: '',
-  barangay: '',
-  cityMunicipality: '',
-  province: '',
-};
+function createInitialContact(): ContributionContactForm {
+  return {
+    websites: [''],
+    phoneNumbers: [''],
+  };
+}
 
-// ---------------------------------------------------------------------------
-// ContributePage
-// ---------------------------------------------------------------------------
+function createInitialForm(): ContributionFormState {
+  return {
+    name: '',
+    description: '',
+    latitude: '',
+    longitude: '',
+    address: createInitialAddress(),
+    operatingHours: createInitialOperatingHours(),
+    galleryUploads: [],
+    contact: createInitialContact(),
+  };
+}
+
+function getFileNameFromImageUrl(imageUrl: string): string {
+  const sanitizedUrl = imageUrl.split('?')[0] ?? imageUrl;
+  const segments = sanitizedUrl.split('/').filter(Boolean);
+  const fileName = segments.at(-1);
+
+  if (!fileName) return 'uploaded-image';
+
+  return decodeURIComponent(fileName);
+}
+
+function mapPoiToForm(poi: POI): ContributionFormState {
+  const mappedHours = createInitialOperatingHours().map(baseHour => {
+    const existingHour = poi.operatingHours.find(hour => hour.dayOfWeek === baseHour.dayOfWeek);
+    if (!existingHour) return baseHour;
+
+    return {
+      ...baseHour,
+      openTime: existingHour.openTime ?? '',
+      closeTime: existingHour.closeTime ?? '',
+      isClosed: existingHour.isClosed,
+      is24Hours: existingHour.is24Hours,
+    };
+  });
+
+  return {
+    name: poi.name,
+    description: poi.description ?? '',
+    latitude: poi.latitude.toString(),
+    longitude: poi.longitude.toString(),
+    address: {
+      blockLotNumber: '',
+      houseNumber: '',
+      purok: '',
+      street: poi.address?.street ?? '',
+      subdivisionName: '',
+      barangay: poi.address?.barangay ?? '',
+      cityMunicipality: poi.address?.cityMunicipality ?? '',
+      province: poi.address?.province ?? '',
+      postalCode: poi.address?.postalCode ?? '',
+    },
+    operatingHours: mappedHours,
+    galleryUploads: poi.galleries.map(gallery => ({
+      id: gallery.id,
+      fileName: getFileNameFromImageUrl(gallery.imageUrl),
+      mimeType: '',
+      size: 0,
+      dataUrl: gallery.imageUrl,
+    })),
+    contact: createInitialContact(),
+  };
+}
+
+function parseCoordinate(value: string): number | null {
+  const parsedValue = Number(value);
+  if (!Number.isFinite(parsedValue)) return null;
+
+  return parsedValue;
+}
+
+function cleanString(value: string): string | undefined {
+  const trimmedValue = value.trim();
+  if (trimmedValue.length === 0) return undefined;
+
+  return trimmedValue;
+}
 
 export default function ContributePage() {
   const mapRef = useRef<MapRef | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
   const { pois } = usePois();
 
-  // Map interaction state
-  const [isAddMode, setIsAddMode]               = useState(false);
-  const [pickedLocation, setPickedLocation]     = useState<PickedLocation | null>(null);
-  const [editingPoi, setEditingPoi]             = useState<POI | null>(null);
-
-  // Form state
-  const [form, setForm]             = useState<FormState>(INITIAL_FORM);
+  const [isPinModeEnabled, setIsPinModeEnabled] = useState(false);
+  const [pickedLocation, setPickedLocation] = useState<PickedLocation | null>(null);
+  const [editingPoi, setEditingPoi] = useState<POI | null>(null);
+  const [form, setForm] = useState<ContributionFormState>(createInitialForm);
   const [showAddress, setShowAddress] = useState(false);
+  const [showMedia, setShowMedia] = useState(true);
+  const [showHours, setShowHours] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // ---------------------------------------------------------------------------
-  // Handlers
-  // ---------------------------------------------------------------------------
+  const mode = editingPoi ? 'edit' : 'add';
 
-  const handleLocationPick = (loc: PickedLocation) => {
-    setPickedLocation(loc);
-    // Auto-open the sidebar if it was closed
-    if (!isAddMode) setIsAddMode(false);
+  const hiddenPoiIds = useMemo(() => {
+    if (!editingPoi) return [];
+    return [editingPoi.id];
+  }, [editingPoi]);
+
+  const syncCoordinates = (latitude: number, longitude: number) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+    }));
+    setPickedLocation({ latitude, longitude });
+  };
+
+  const handleLocationPick = (location: PickedLocation) => {
+    syncCoordinates(location.latitude, location.longitude);
   };
 
   const handleSuggestEdit = (poi: POI) => {
     setEditingPoi(poi);
+    setForm(mapPoiToForm(poi));
     setPickedLocation({ latitude: poi.latitude, longitude: poi.longitude });
-    setForm(prev => ({
-      ...prev,
-      name: poi.name,
-      description: poi.description,
-      street: poi.address?.street ?? '',
-      barangay: poi.address?.barangay ?? '',
-      cityMunicipality: poi.address?.cityMunicipality ?? '',
-      province: poi.address?.province ?? '',
+    setIsPinModeEnabled(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
+  };
+
+  const handleFormFieldChange = (field: keyof ContributionFormState, value: string) => {
+    setForm(previousForm => ({ ...previousForm, [field]: value }));
+  };
+
+  const handleAddressFieldChange = (field: keyof ContributionAddressForm, value: string) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      address: { ...previousForm.address, [field]: value },
     }));
   };
 
-  const handleFieldChange = (field: keyof FormState, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+  const handleCoordinateChange = (field: 'latitude' | 'longitude', value: string) => {
+    setForm(previousForm => {
+      const updatedForm = { ...previousForm, [field]: value };
+      const parsedLatitude = parseCoordinate(updatedForm.latitude);
+      const parsedLongitude = parseCoordinate(updatedForm.longitude);
+
+      if (parsedLatitude !== null && parsedLongitude !== null) {
+        setPickedLocation({ latitude: parsedLatitude, longitude: parsedLongitude });
+      }
+
+      return updatedForm;
+    });
+  };
+
+  const handleOperatingHoursChange = (
+    dayOfWeek: number,
+    field: keyof Omit<ContributionOperatingHourForm, 'dayOfWeek'>,
+    value: string | boolean
+  ) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      operatingHours: previousForm.operatingHours.map(hour => {
+        if (hour.dayOfWeek !== dayOfWeek) return hour;
+        if (field === 'isClosed' && value === true) {
+          return { ...hour, isClosed: true, is24Hours: false, openTime: '', closeTime: '' };
+        }
+        if (field === 'is24Hours' && value === true) {
+          return { ...hour, is24Hours: true, isClosed: false, openTime: '', closeTime: '' };
+        }
+
+        return { ...hour, [field]: value };
+      }),
+    }));
+  };
+
+  const handleGalleryUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const uploadPromises = Array.from(files).map(file => {
+      return new Promise<ContributionGalleryUpload>((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+          const result = fileReader.result;
+          if (typeof result !== 'string') {
+            reject(new Error('Failed to parse uploaded file.'));
+            return;
+          }
+
+          resolve({
+            id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+            fileName: file.name,
+            mimeType: file.type,
+            size: file.size,
+            dataUrl: result,
+          });
+        };
+        fileReader.onerror = () => reject(new Error('Failed to read uploaded file.'));
+        fileReader.readAsDataURL(file);
+      });
+    });
+
+    try {
+      const uploads = await Promise.all(uploadPromises);
+      setForm(previousForm => ({
+        ...previousForm,
+        galleryUploads: [...previousForm.galleryUploads, ...uploads],
+      }));
+    } catch {
+      setSubmitStatus('error');
+      setErrorMessage('Could not upload one or more selected images.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleRemoveGalleryUpload = (id: string) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      galleryUploads: previousForm.galleryUploads.filter(upload => upload.id !== id),
+    }));
+  };
+
+  const handleContactFieldChange = (
+    field: keyof ContributionContactForm,
+    index: number,
+    value: string
+  ) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      contact: {
+        ...previousForm.contact,
+        [field]: previousForm.contact[field].map((entry, entryIndex) =>
+          entryIndex === index ? value : entry
+        ),
+      },
+    }));
+  };
+
+  const handleAddContactField = (field: keyof ContributionContactForm) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      contact: {
+        ...previousForm.contact,
+        [field]: [...previousForm.contact[field], ''],
+      },
+    }));
+  };
+
+  const handleRemoveContactField = (field: keyof ContributionContactForm, index: number) => {
+    setForm(previousForm => ({
+      ...previousForm,
+      contact: {
+        ...previousForm.contact,
+        [field]:
+          previousForm.contact[field].length <= 1
+            ? ['']
+            : previousForm.contact[field].filter((_, entryIndex) => entryIndex !== index),
+      },
+    }));
   };
 
   const handleReset = () => {
     setPickedLocation(null);
     setEditingPoi(null);
-    setForm(INITIAL_FORM);
+    setForm(createInitialForm());
     setShowAddress(false);
+    setShowMedia(true);
+    setShowHours(false);
     setSubmitStatus('idle');
     setErrorMessage('');
+    setIsPinModeEnabled(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleClearPickedLocation = () => {
+    setPickedLocation(null);
+    setForm(previousForm => ({
+      ...previousForm,
+      latitude: '',
+      longitude: '',
+    }));
+  };
 
-    if (!pickedLocation) {
-      setErrorMessage('Please click the map to place a pin first.');
-      setSubmitStatus('error');
-      return;
-    }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const latitude = parseCoordinate(form.latitude);
+    const longitude = parseCoordinate(form.longitude);
 
     if (!form.name.trim()) {
       setErrorMessage('Location name is required.');
@@ -115,223 +336,104 @@ export default function ContributePage() {
       return;
     }
 
+    if (latitude === null || longitude === null) {
+      setErrorMessage('Valid latitude and longitude are required.');
+      setSubmitStatus('error');
+      return;
+    }
+
     setSubmitStatus('loading');
     setErrorMessage('');
+
+    const cleanAddress = Object.fromEntries(
+      Object.entries(form.address)
+        .map(([key, value]) => [key, cleanString(value)])
+        .filter(([, value]) => value !== undefined)
+    );
 
     const proposedData = {
       name: form.name.trim(),
       description: form.description.trim(),
-      latitude: pickedLocation.latitude,
-      longitude: pickedLocation.longitude,
-      address: {
-        street: form.street.trim() || undefined,
-        barangay: form.barangay.trim() || undefined,
-        cityMunicipality: form.cityMunicipality.trim() || undefined,
-        province: form.province.trim() || undefined,
+      latitude,
+      longitude,
+      address: cleanAddress,
+      contact: {
+        websites: form.contact.websites.map(cleanString).filter(Boolean),
+        phoneNumbers: form.contact.phoneNumbers.map(cleanString).filter(Boolean),
       },
+      galleries: {
+        uploads: form.galleryUploads.map(upload => ({
+          fileName: upload.fileName,
+          mimeType: upload.mimeType,
+          size: upload.size,
+          dataUrl: upload.dataUrl,
+        })),
+      },
+      operatingHours: form.operatingHours.map(hour => ({
+        dayOfWeek: hour.dayOfWeek,
+        openTime: hour.isClosed || hour.is24Hours ? undefined : cleanString(hour.openTime),
+        closeTime: hour.isClosed || hour.is24Hours ? undefined : cleanString(hour.closeTime),
+        isClosed: hour.isClosed,
+        is24Hours: hour.is24Hours,
+      })),
     };
 
     try {
-      const res = await fetch('/api/contributions', {
+      const response = await fetch('/api/contributions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: editingPoi ? 'UPDATE' : 'CREATE',
+          type: mode === 'edit' ? 'UPDATE' : 'CREATE',
           poiId: editingPoi?.id ?? undefined,
           proposedData,
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? 'Submission failed');
+      if (!response.ok) {
+        const responseData = await response.json();
+        throw new Error(responseData.error ?? 'Submission failed');
       }
 
       setSubmitStatus('success');
-      // Reset after a short delay so the user sees the success message
       setTimeout(handleReset, 2500);
-    } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong.');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Something went wrong.');
       setSubmitStatus('error');
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
-
-  const hasPin = Boolean(pickedLocation);
-
   return (
-    <div ref={containerRef} className='relative flex h-full w-full overflow-hidden'>
-      {/* ------------------------------------------------------------------ */}
-      {/* LEFT: Contribution Sidebar                                          */}
-      {/* ------------------------------------------------------------------ */}
-      <aside className='bg-surface border-border flex h-full w-96 shrink-0 flex-col border-r'>
-        {/* Header */}
-        <div className='border-border border-b px-5 py-4'>
-          <TextHeading className='text-text-main text-lg font-bold'>
-            {editingPoi ? 'Suggest an Edit' : 'Add a Location'}
-          </TextHeading>
-          <TextBody className='text-text-muted mt-1 text-xs leading-snug'>
-            {editingPoi
-              ? `Proposing changes to "${editingPoi.name}". An admin will review before it goes live.`
-              : 'Enable pin mode, click the map to place a marker, then fill in the details below.'}
-          </TextBody>
-        </div>
+    <div className='relative flex h-full w-full overflow-hidden'>
+      <ContributionSidebar
+        mode={mode}
+        selectedPoi={editingPoi}
+        form={form}
+        showAddress={showAddress}
+        showMedia={showMedia}
+        showHours={showHours}
+        submitStatus={submitStatus}
+        errorMessage={errorMessage}
+        isPinModeEnabled={isPinModeEnabled}
+        onReset={handleReset}
+        onSubmit={handleSubmit}
+        onTogglePinMode={() => setIsPinModeEnabled(previousValue => !previousValue)}
+        onClearPickedLocation={handleClearPickedLocation}
+        onFormFieldChange={handleFormFieldChange}
+        onAddressFieldChange={handleAddressFieldChange}
+        onCoordinateChange={handleCoordinateChange}
+        onToggleAddress={() => setShowAddress(previousValue => !previousValue)}
+        onToggleMedia={() => setShowMedia(previousValue => !previousValue)}
+        onToggleHours={() => setShowHours(previousValue => !previousValue)}
+        onOperatingHoursChange={handleOperatingHoursChange}
+        onGalleryUpload={handleGalleryUpload}
+        onRemoveGalleryUpload={handleRemoveGalleryUpload}
+        onContactFieldChange={handleContactFieldChange}
+        onAddContactField={handleAddContactField}
+        onRemoveContactField={handleRemoveContactField}
+      />
 
-        {/* Pin Mode Toggle */}
-        <div className='border-border border-b px-5 py-3'>
-          <button
-            type='button'
-            onClick={() => setIsAddMode(prev => !prev)}
-            aria-pressed={isAddMode}
-            className={cn(
-              'inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition',
-              isAddMode
-                ? 'bg-primary-500 text-white shadow-sm'
-                : 'border-border bg-background text-text-main border hover:bg-surface-light'
-            )}
-          >
-            <MapPinPlusInside className='h-4 w-4' />
-            {isAddMode ? 'Click the map to place pin…' : 'Enable Pin Mode'}
-          </button>
-
-          {hasPin && (
-            <p className='text-text-muted mt-2 flex items-center gap-1.5 text-xs'>
-              <MapPin className='text-primary-500 h-3.5 w-3.5 shrink-0' />
-              {pickedLocation!.latitude.toFixed(5)}, {pickedLocation!.longitude.toFixed(5)}
-              <button
-                type='button'
-                onClick={() => setPickedLocation(null)}
-                className='text-text-muted hover:text-error-500 ml-auto transition'
-                aria-label='Remove pin'
-              >
-                <X className='h-3.5 w-3.5' />
-              </button>
-            </p>
-          )}
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className='flex flex-1 flex-col overflow-y-auto'>
-          <div className='flex flex-1 flex-col gap-4 px-5 py-4'>
-            {/* Name */}
-            <div className='flex flex-col gap-1.5'>
-              <label className='text-text-main text-xs font-semibold' htmlFor='contrib-name'>
-                Location Name <span className='text-error-500'>*</span>
-              </label>
-              <input
-                id='contrib-name'
-                type='text'
-                required
-                placeholder='e.g. Cagsawa Ruins'
-                value={form.name}
-                onChange={e => handleFieldChange('name', e.target.value)}
-                className='border-border text-text-main placeholder:text-text-muted bg-background focus:border-primary-400 rounded-lg border px-3 py-2 text-sm outline-none transition'
-              />
-            </div>
-
-            {/* Description */}
-            <div className='flex flex-col gap-1.5'>
-              <label className='text-text-main text-xs font-semibold' htmlFor='contrib-desc'>
-                Description
-              </label>
-              <textarea
-                id='contrib-desc'
-                rows={3}
-                placeholder='Brief description of this location…'
-                value={form.description}
-                onChange={e => handleFieldChange('description', e.target.value)}
-                className='border-border text-text-main placeholder:text-text-muted bg-background focus:border-primary-400 resize-none rounded-lg border px-3 py-2 text-sm outline-none transition'
-              />
-            </div>
-
-            {/* Address — collapsible */}
-            <div className='border-border rounded-lg border'>
-              <button
-                type='button'
-                onClick={() => setShowAddress(p => !p)}
-                className='text-text-main flex w-full items-center justify-between px-3 py-2.5 text-xs font-semibold'
-              >
-                Address (optional)
-                {showAddress ? (
-                  <ChevronUp className='h-3.5 w-3.5' />
-                ) : (
-                  <ChevronDown className='h-3.5 w-3.5' />
-                )}
-              </button>
-
-              {showAddress && (
-                <div className='border-border flex flex-col gap-3 border-t px-3 pb-3 pt-3'>
-                  {(
-                    [
-                      ['street',          'Street'],
-                      ['barangay',        'Barangay'],
-                      ['cityMunicipality','City / Municipality'],
-                      ['province',        'Province'],
-                    ] as [keyof FormState, string][]
-                  ).map(([field, label]) => (
-                    <div key={field} className='flex flex-col gap-1'>
-                      <label className='text-text-muted text-xs' htmlFor={`contrib-${field}`}>
-                        {label}
-                      </label>
-                      <input
-                        id={`contrib-${field}`}
-                        type='text'
-                        value={form[field]}
-                        onChange={e => handleFieldChange(field, e.target.value)}
-                        className='border-border text-text-main placeholder:text-text-muted bg-background focus:border-primary-400 rounded-md border px-2.5 py-1.5 text-xs outline-none transition'
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Status banners */}
-          {submitStatus === 'error' && (
-            <div className='mx-5 mb-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700'>
-              <AlertCircle className='h-4 w-4 shrink-0' />
-              {errorMessage}
-            </div>
-          )}
-
-          {submitStatus === 'success' && (
-            <div className='mx-5 mb-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700'>
-              <CheckCircle className='h-4 w-4 shrink-0' />
-              Submitted! An admin will review your contribution soon.
-            </div>
-          )}
-
-          {/* Footer actions */}
-          <div className='border-border border-t px-5 py-3 flex gap-2'>
-            <button
-              type='button'
-              onClick={handleReset}
-              className='border-border text-text-muted hover:bg-surface-light flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition'
-            >
-              Reset
-            </button>
-            <button
-              type='submit'
-              disabled={submitStatus === 'loading' || submitStatus === 'success'}
-              className='bg-primary-500 hover:bg-primary-600 flex flex-[2] items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60'
-            >
-              {submitStatus === 'loading' && <Loader2 className='h-4 w-4 animate-spin' />}
-              {editingPoi ? 'Submit Edit' : 'Submit for Review'}
-            </button>
-          </div>
-        </form>
-      </aside>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* RIGHT: Map                                                          */}
-      {/* ------------------------------------------------------------------ */}
       <div className='relative h-full flex-1'>
-        {/* Instruction hint overlay when pin mode is active */}
-        {isAddMode && !hasPin && (
+        {isPinModeEnabled && !pickedLocation && (
           <div className='pointer-events-none absolute top-4 left-1/2 z-20 -translate-x-1/2'>
             <div className='bg-background/95 text-text-main rounded-full border px-4 py-2 text-sm font-medium shadow backdrop-blur-sm'>
               Click anywhere on the map to place your pin
@@ -342,13 +444,14 @@ export default function ContributePage() {
         <ContributeMapArea
           pois={pois}
           pickedLocation={pickedLocation}
-          onLocationPick={loc => {
-            handleLocationPick(loc);
-            setIsAddMode(false); // exit pin mode after placing
+          onLocationPick={location => {
+            handleLocationPick(location);
+            setIsPinModeEnabled(false);
           }}
           onSuggestEdit={handleSuggestEdit}
           mapRef={mapRef}
-          isAddMode={isAddMode}
+          isAddMode={isPinModeEnabled}
+          hiddenPoiIds={hiddenPoiIds}
         />
       </div>
     </div>

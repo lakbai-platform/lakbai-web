@@ -28,7 +28,16 @@ model User {
   id             String         @id
   email          String         @unique
   name           String?
+  firstName      String?
+  lastName       String?
+  username       String?        @unique
   avatarUrl      String?
+  location       String?
+  bio            String?        @db.Text
+  facebookUrl    String?
+  instagramUrl   String?
+  tiktokUrl      String?
+  youtubeUrl     String?
 
   reviews        POIReview[]
   vouches        POIVouch[]
@@ -232,13 +241,16 @@ model ItineraryItem {
   journey         Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
   poiId           String
   poi             POI            @relation(fields: [poiId], references: [id], onDelete: Cascade)
-  dayNumber       Int            
-  orderIndex      Int            
+  dayNumber       Int?
+  orderIndex      Int            @default(0)
+  startTime       String?
+  endTime         String?
+  notes           String?        @db.Text
   
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  
-  @@unique([journeyId, poiId, dayNumber]) 
+
+  @@index([journeyId, dayNumber, orderIndex])
 }
 
 model Contribution {

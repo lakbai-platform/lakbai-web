@@ -205,7 +205,7 @@ Only output the raw JSON. Not wrapped in markdown blocks.
       Current Live Journey State:
       Destination: ${journey.destination}
       Budget: ${journey.budget}
-      Current Itinerary Setup: ${JSON.stringify(journey.itineraryItems.map(i => ({ day: i.dayNumber, poi: i.poi.name })))}
+      Current Itinerary Setup: ${JSON.stringify(journey.itineraryItems.map(i => ({ day: i.dayNumber, poi: i.poi.name, startTime: i.startTime, endTime: i.endTime })))}
       
       Available POIs in database for this region:
       ${JSON.stringify(contextPois)}
@@ -247,8 +247,11 @@ Only output the raw JSON. Not wrapped in markdown blocks.
           data: {
             journeyId: journey.id,
             poiId: item.poiId,
-            dayNumber: item.dayNumber || 1,
-            orderIndex: item.orderIndex || 0
+            dayNumber: item.dayNumber ?? null,
+            orderIndex: item.orderIndex ?? 0,
+            startTime: item.startTime ?? null,
+            endTime: item.endTime ?? null,
+            notes: item.notes ?? null,
           }
         });
       }

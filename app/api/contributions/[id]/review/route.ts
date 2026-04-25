@@ -67,6 +67,7 @@ export async function PATCH(
           longitude,
           tagIds = [],
           address,
+          galleries,
           operatingHours = [],
         } = data as {
           name: string;
@@ -75,11 +76,22 @@ export async function PATCH(
           longitude: number;
           tagIds?: string[];
           address?: {
+            blockLotNumber?: string;
+            houseNumber?: string;
+            purok?: string;
             street?: string;
+            subdivisionName?: string;
             barangay?: string;
             cityMunicipality?: string;
             province?: string;
             postalCode?: string;
+          };
+          galleries?: {
+            urls?: string[];
+            uploads?: Array<{
+              fileName?: string;
+              dataUrl?: string;
+            }>;
           };
           operatingHours?: Array<{
             dayOfWeek: number;
@@ -119,6 +131,22 @@ export async function PATCH(
                   })),
                 }
               : undefined,
+            galleries: galleries
+              ? (() => {
+                  const galleryImageUrls = [
+                    ...(galleries.urls ?? []),
+                    ...((galleries.uploads ?? []).map(upload => upload.dataUrl ?? '')),
+                  ].filter(url => typeof url === 'string' && url.trim().length > 0);
+
+                  if (galleryImageUrls.length === 0) {
+                    return undefined;
+                  }
+
+                  return {
+                    create: galleryImageUrls.map(imageUrl => ({ imageUrl: imageUrl.trim() })),
+                  };
+                })()
+              : undefined,
           },
         });
       } else if (contribution.type === 'UPDATE') {
@@ -135,12 +163,40 @@ export async function PATCH(
           latitude,
           longitude,
           tagIds,
+          address,
+          galleries,
+          operatingHours,
         } = data as {
           name?: string;
           description?: string;
           latitude?: number;
           longitude?: number;
           tagIds?: string[];
+          address?: {
+            blockLotNumber?: string;
+            houseNumber?: string;
+            purok?: string;
+            street?: string;
+            subdivisionName?: string;
+            barangay?: string;
+            cityMunicipality?: string;
+            province?: string;
+            postalCode?: string;
+          };
+          galleries?: {
+            urls?: string[];
+            uploads?: Array<{
+              fileName?: string;
+              dataUrl?: string;
+            }>;
+          };
+          operatingHours?: Array<{
+            dayOfWeek: number;
+            openTime?: string;
+            closeTime?: string;
+            isClosed?: boolean;
+            is24Hours?: boolean;
+          }>;
         };
 
         await prisma.pOI.update({
@@ -152,6 +208,39 @@ export async function PATCH(
             ...(longitude   !== undefined && { longitude: Number(longitude) }),
             ...(tagIds      !== undefined && {
               tags: { set: tagIds.map(tid => ({ id: tid })) },
+            }),
+            ...(address !== undefined && {
+              address: {
+                upsert: {
+                  update: address,
+                  create: address,
+                },
+              },
+            }),
+            ...(Array.isArray(operatingHours) && {
+              operatingHours: {
+                deleteMany: {},
+                create: operatingHours.map(hour => ({
+                  dayOfWeek: hour.dayOfWeek,
+                  openTime: hour.openTime ?? null,
+                  closeTime: hour.closeTime ?? null,
+                  isClosed: hour.isClosed ?? false,
+                  is24Hours: hour.is24Hours ?? false,
+                })),
+              },
+            }),
+            ...(galleries !== undefined && {
+              galleries: (() => {
+                const galleryImageUrls = [
+                  ...(galleries?.urls ?? []),
+                  ...((galleries?.uploads ?? []).map(upload => upload.dataUrl ?? '')),
+                ].filter(url => typeof url === 'string' && url.trim().length > 0);
+
+                return {
+                  deleteMany: {},
+                  create: galleryImageUrls.map(imageUrl => ({ imageUrl: imageUrl.trim() })),
+                };
+              })(),
             }),
           },
         });

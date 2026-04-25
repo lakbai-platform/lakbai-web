@@ -26,6 +26,7 @@ type ContributeMapAreaProps = {
   onSuggestEdit?: (poi: POI) => void;
   mapRef?: RefObject<MapRef | null>;
   isAddMode: boolean;
+  hiddenPoiIds?: string[];
 };
 
 export default function ContributeMapArea({
@@ -35,6 +36,7 @@ export default function ContributeMapArea({
   onSuggestEdit,
   mapRef,
   isAddMode,
+  hiddenPoiIds = [],
 }: ContributeMapAreaProps) {
   // Keep a stable ref to callbacks so the effect doesn't re-register
   const onLocationPickRef = useRef(onLocationPick);
@@ -82,6 +84,10 @@ export default function ContributeMapArea({
 
       {/* Existing POIs — read-only reference markers */}
       {pois.map(poi => {
+        if (hiddenPoiIds.includes(poi.id)) {
+          return null;
+        }
+
         const { icon: Icon, color } = getTagIcon(poi.tags || [], poi.primaryTagId);
         return (
           <MapMarker
@@ -123,8 +129,13 @@ export default function ContributeMapArea({
           }
         >
           <MarkerContent>
-            <div className='bg-primary-500 flex h-9 w-9 animate-bounce items-center justify-center rounded-full border-2 border-white shadow-lg'>
-              <MapPin className='h-5 w-5 text-white' />
+            <div className='relative flex flex-col items-center'>
+              <div className='bg-background/95 text-text-main mb-1.5 max-w-56 rounded-lg border px-2.5 py-1.5 text-center text-[11px] leading-tight shadow-sm'>
+                Drag this marker to update latitude and longitude.
+              </div>
+              <div className='bg-primary-500 flex h-9 w-9 animate-bounce items-center justify-center rounded-full border-2 border-white shadow-lg'>
+                <MapPin className='h-5 w-5 text-white' />
+              </div>
             </div>
           </MarkerContent>
         </MapMarker>
