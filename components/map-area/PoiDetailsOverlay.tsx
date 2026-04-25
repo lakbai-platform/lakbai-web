@@ -20,6 +20,7 @@ import PoiMapCanvas from '@/components/map-area/PoiMapCanvas';
 import type { POI } from '@/components/map-area/types';
 import PoiFullscreenGallery from './PoiFullscreenGallery';
 import { getTagLabel, getTagVisual } from './get-tag-icon';
+import { getPOIStatus, getDayLabel, formatSchedule } from './get-poi-status';
 import { TextHeading, TextBody } from '@/components/text';
 import { cn } from '@/lib/cn';
 
@@ -383,15 +384,44 @@ export default function PoiDetailsOverlay({
               </div>
 
               <div>
-                <TextBody className='text-foreground font-semibold'>
+                <TextBody className='text-foreground flex items-center gap-2 font-semibold'>
                   Operating Hours
                 </TextBody>
-                <TextBody className='mt-1 font-semibold text-emerald-600'>
-                  Open Now
-                </TextBody>
-                <TextBody className='text-foreground/80 mt-1'>
-                  Daily 6 AM - 6 PM
-                </TextBody>
+                {(() => {
+                  const status = getPOIStatus(poi.operatingHours ?? []);
+                  return (
+                    <>
+                      <TextBody
+                        className='mt-1 font-semibold'
+                        style={{ color: status.color }}
+                      >
+                        {status.status}
+                      </TextBody>
+                      <TextBody className='text-foreground/70 text-xs'>
+                        {status.message}
+                      </TextBody>
+                      {poi.operatingHours && poi.operatingHours.length > 0 && (
+                        <div className='mt-2 space-y-0.5'>
+                          {[...poi.operatingHours]
+                            .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                            .map(record => (
+                              <div
+                                key={record.id}
+                                className='flex items-center justify-between gap-2 text-xs'
+                              >
+                                <span className='text-foreground/60 w-8 shrink-0'>
+                                  {getDayLabel(record.dayOfWeek)}
+                                </span>
+                                <span className='text-foreground/80'>
+                                  {formatSchedule(record)}
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

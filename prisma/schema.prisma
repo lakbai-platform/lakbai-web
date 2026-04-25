@@ -33,7 +33,6 @@ model POI {
   description      String         @db.Text
   latitude         Float          
   longitude        Float          
-  operatingHours   String?        
   vouchCount       Int            @default(0) 
   primaryTagId     String?
   primaryTag       POITag?        @relation("POIPrimaryTag", fields: [primaryTagId], references: [id], onDelete: SetNull)
@@ -42,6 +41,7 @@ model POI {
   tags             POITag[]       @relation("POITags") // <--- Many-to-many relation for tags/themes
   address          POIAddress?
   galleries        POIGallery[]
+  operatingHours   OperatingHours[]
   reviews          POIReview[]
   vouches          POIVouch[]
   favorites        POIFavorite[]
@@ -105,7 +105,22 @@ model POIGallery {
   createdAt DateTime @default(now())
 }
 
+model OperatingHours {
+  id        String   @id @default(cuid())
+  poiId     String
+  poi       POI      @relation(fields: [poiId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int      // 0 (Sun) to 6 (Sat)
+  openTime  String?  // Format: "HH:mm" (e.g., "08:00")
+  closeTime String?  // Format: "HH:mm" (e.g., "22:00")
+  isClosed  Boolean  @default(false)
+  is24Hours Boolean  @default(false)
+
+  @@unique([poiId, dayOfWeek])
+}
+
 model POIReview {
+
   id        String   @id @default(cuid())
   poiId     String
   poi       POI      @relation(fields: [poiId], references: [id], onDelete: Cascade)

@@ -24,6 +24,15 @@ export type POIAddress = {
   postalCode?: string | null;
 };
 
+export type OperatingHours = {
+  id: string;
+  dayOfWeek: number; // 0 (Sun) – 6 (Sat)
+  openTime: string | null;  // "HH:mm"
+  closeTime: string | null; // "HH:mm"
+  isClosed: boolean;
+  is24Hours: boolean;
+};
+
 export type POI = {
   id: string;
   name: string;
@@ -35,4 +44,6 @@ export type POI = {
   tags: POITag[];
   galleries: POIGallery[];
   address?: POIAddress | null;
+  operatingHours: OperatingHours[];
 };
+

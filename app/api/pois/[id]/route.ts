@@ -22,6 +22,7 @@ export async function GET(
                 },
                 galleries: true,
                 address: true,
+                operatingHours: true,
             }
         });
 

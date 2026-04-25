@@ -26,6 +26,7 @@ export async function GET(request: Request) {
                 },
                 galleries: true,
                 address: true,
+                operatingHours: true,
                 // Calculate aggregations or fetch reviews if needed
             },
             orderBy: {

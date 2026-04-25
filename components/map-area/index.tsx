@@ -153,7 +153,8 @@ export default function MapArea({
               primaryTagId: p.primaryTagId ?? null,
               tags: p.tags || [],
               galleries: p.galleries || [],
-              address: p.address || null
+              address: p.address || null,
+              operatingHours: p.operatingHours || [],
             });
             setSelectedPoiId(poiFromUrl);
           } else {
